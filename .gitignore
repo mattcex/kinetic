@@ -1,0 +1,10 @@
+# XcodeGen generates the project on the CI runner from project.yml
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+build/
+dist/
+.DS_Store
+*.ipa
+*.log

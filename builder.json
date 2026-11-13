@@ -1,0 +1,21 @@
+{
+  "project": "Kinetic",
+  "platform": "ios",
+  "github": {
+    "owner": "mattcex",
+    "repo": "kinetic"
+  },
+  "provider": "github",
+  "codemagic": {},
+  "bitrise": {},
+  "ios": {
+    "path": ".",
+    "scheme": "Kinetic"
+  },
+  "flutter": {
+    "watch": {}
+  },
+  "reactNative": {},
+  "kmp": {},
+  "mobai": {}
+}
