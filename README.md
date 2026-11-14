@@ -53,7 +53,7 @@ Kinetic makes no network requests and has no accounts, analytics or tracking.
 ## Project structure
 
 ```
-project.yml                 XcodeGen specification (target, settings, scheme)
+Kinetic.xcodeproj           Xcode project (single app target, shared scheme)
 Kinetic/
   App/                      App entry point and navigation
   Model/                    Data types, persistence (Store), sample data
@@ -64,19 +64,18 @@ Kinetic/
 builder.json                ios-builder configuration
 ```
 
-The Xcode project is generated from `project.yml` and is not tracked in git.
+The project uses a file-system synchronized group for `Kinetic/`. Files added to that folder are picked up by Xcode without editing the project file. Opening it requires Xcode 16 or later.
 
 ## Building
 
-### With a Mac
+### With Xcode
 
-```bash
-brew install xcodegen
-xcodegen generate
-open Kinetic.xcodeproj
-```
+1. Open `Kinetic.xcodeproj`.
+2. Under **Signing & Capabilities**, select a development team. A free Personal Team (any Apple ID) is enough to run the app on your own device.
+3. If Xcode reports that the bundle identifier `app.kinetic.strength` is unavailable, change it to one of your own, such as `com.yourname.kinetic`.
+4. Select a simulator or a connected iPhone, then choose **Product → Run**.
 
-To run on a device, select a development team under *Signing & Capabilities*. You may also need to change the bundle identifier `app.kinetic.strength` to one your team owns.
+With a free Personal Team, an installed build is valid for 7 days. After that, run it from Xcode again. Reinstalling keeps the app's data.
 
 ### Without a Mac
 
@@ -87,7 +86,7 @@ builder auth github
 builder ios build            # unsigned IPA in ./dist/
 ```
 
-On the runner, the workflow generates the Xcode project with XcodeGen and builds the `Kinetic` scheme.
+On the runner, the workflow builds the `Kinetic` scheme of `Kinetic.xcodeproj`.
 
 The resulting IPA is unsigned. To install it on a device, sign it with one of these:
 - your own development or ad-hoc profile (`builder signing setup`)
