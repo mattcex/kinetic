@@ -18,7 +18,8 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Pinned: this image ships the Android SDK (ubuntu-latest is moving to a new image).
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -39,7 +40,21 @@ jobs:
       - name: Build release APK
         env:
           VERSION_CODE: ${{ github.run_number }}
-        run: gradle --project-dir android assembleRelease --no-daemon --stacktrace
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME:-unset}"
+          set +e
+          gradle --project-dir android assembleRelease --no-daemon > gradle.log 2>&1
+          status=$?
+          set -e
+          cat gradle.log
+          if [ "$status" -ne 0 ]; then
+            # Repeat the essential lines as an annotation, which is readable without opening the log.
+            grep -nE "error:|e: |What went wrong|Caused by|FAILED|SDK location|Execution failed|Could not" -A4 gradle.log | head -n 80 > failure.txt || true
+            [ -s failure.txt ] || tail -n 60 gradle.log > failure.txt
+            message=$(sed -e 's/%/%25/g' -e 's/\r//g' failure.txt | awk 'BEGIN { ORS = "%0A" } { print }')
+            echo "::error title=Gradle build failed::${message}"
+            exit "$status"
+          fi
 
       - name: Collect APK
         run: |
