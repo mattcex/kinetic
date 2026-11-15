@@ -78,6 +78,9 @@
   var addCtx = null;
   var app = document.getElementById('app');
 
+  /** Native helpers provided by the Android app (MainActivity.Bridge); absent in browsers. */
+  var bridge = window.AndroidBridge || null;
+
   function clampGoal(g) {
     g = parseInt(g, 10);
     return g >= 2 && g <= 7 ? g : 4;
@@ -402,6 +405,9 @@
   }
 
   function copyText(text) {
+    if (bridge) {
+      try { bridge.copy(text); return Promise.resolve(true); } catch (err) { /* fall through */ }
+    }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return fallbackCopy(text); });
     }
@@ -427,6 +433,11 @@
   function exportFile() {
     var json = JSON.stringify(compactData());
     var name = 'kinetic-kopia-' + isoDay(Date.now()) + '.json';
+    if (bridge) {
+      // Android share sheet: save to Drive, send to yourself, keep in notes…
+      bridge.share('Kopia Kinetic ' + isoDay(Date.now()), json);
+      return;
+    }
     try {
       var file = new File([json], name, { type: 'application/json' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1133,7 +1144,7 @@
       '<div class="stack">' +
       '<button class="btn-ghost" data-action="copy-code">' + icon('copy', 16, 2) + 'Kopiuj kod kopii</button>' +
       '<textarea id="code-out" class="code" readonly hidden aria-label="Kod kopii"></textarea>' +
-      '<button class="btn-ghost" data-action="export-file">' + icon('share', 16, 2) + 'Zapisz kopię jako plik</button>' +
+      '<button class="btn-ghost" data-action="export-file">' + icon('share', 16, 2) + (bridge ? 'Udostępnij kopię' : 'Zapisz kopię jako plik') + '</button>' +
       '<button class="btn-ghost" data-action="show-restore">' + icon('restore', 16, 2) + 'Przywróć z kopii</button>' +
       '</div>' +
       '<div id="restore" class="restore"' + (showRestore ? '' : ' hidden') + '>' +
@@ -1392,6 +1403,21 @@
 
   window.addEventListener('hashchange', route);
 
+  /**
+   * Called by the Android app on the system Back gesture.
+   * Returns true when the page handled it (closed a sheet or left a detail screen).
+   */
+  window.kineticHandleBack = function () {
+    var root = $('#sheet-root');
+    if (root.firstChild && root.classList.contains('open')) { closeSheet(); return true; }
+    if (ui.route && ui.route !== 'home') {
+      if (ui.fromHome && window.history.length > 1) window.history.back();
+      else location.hash = '#/';
+      return true;
+    }
+    return false;
+  };
+
   // ---------------------------------------------------------------------------
   // Start
   // ---------------------------------------------------------------------------
@@ -1402,7 +1428,8 @@
   }
   route();
 
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  // The Android app serves files from the APK itself, so only the website needs offline caching.
+  if (!bridge && 'serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').catch(function () {});
   }
 })();

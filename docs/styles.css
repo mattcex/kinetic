@@ -38,6 +38,10 @@ body {
 
 body.sheet-open { overflow: hidden; }
 
+/* App-like touch behaviour: no text selection or callouts on UI, but keep it in fields. */
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+
 button {
   font: inherit;
   color: inherit;

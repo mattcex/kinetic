@@ -6,3 +6,6 @@ dist/
 *.ipa
 *.log
 .claude/
+android/.gradle/
+android/**/build/
+android/local.properties

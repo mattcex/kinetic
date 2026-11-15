@@ -2,16 +2,41 @@
 
 Kinetic is a strength-training log. It records working sets per exercise, estimates one-rep max, detects personal records and visualises progress over time. All data is stored on the device.
 
-It ships in two forms with the same features and calculations:
+It ships in three forms with the same features and calculations:
 
-| | Native app | Web app |
-|---|---|---|
-| Location | `Kinetic/`, `Kinetic.xcodeproj` | `docs/` |
-| Runs on | iOS 17.0 or later | Any current browser, including Safari on iOS 15 or later |
-| Stack | Swift, SwiftUI, Swift Charts | HTML, CSS and JavaScript, with no build step or dependencies |
-| Storage | JSON file in the app's Documents directory | `localStorage` in the browser |
+| | iOS app | Web app | Android app |
+|---|---|---|---|
+| Location | `Kinetic/`, `Kinetic.xcodeproj` | `docs/` | `android/` |
+| Runs on | iOS 17.0 or later | Any current browser, including Safari on iOS 15 or later | Android 7.0 (API 24) or later |
+| Stack | Swift, SwiftUI, Swift Charts | HTML, CSS and JavaScript, with no build step or dependencies | The web app bundled in a native WebView shell (Java) |
+| Storage | JSON file in the app's Documents directory | `localStorage` in the browser | `localStorage` inside the app |
 
 The interface language is Polish.
+
+## Android app
+
+**Download:** [kinetic.apk](https://github.com/mattcex/kinetic/releases/download/android/kinetic.apk) from the [Android release](https://github.com/mattcex/kinetic/releases/tag/android).
+
+### Installing
+1. Open the download link on the phone.
+2. Open `kinetic.apk`. If Android asks, allow your browser to install apps.
+
+The app works fully offline. Its interface is the web app from `docs/`, packaged into the APK at build time, so both always match. The Android shell adds:
+- **Back handling:** the system Back gesture closes an open sheet, then returns to the overview.
+- **Backups:** copying a backup code uses the system clipboard, and sharing a backup opens the Android share sheet.
+- **Restoring:** a backup file is picked with the system file picker.
+- **Layout:** the content stays clear of the status bar, navigation bar, display cutout and keyboard.
+
+### Builds and signing
+The [Android APK](.github/workflows/android.yml) workflow runs on every push to `main` that changes `android/` or `docs/`. It builds a release APK with Gradle and replaces the `android` release. Each build uses the workflow run number as its `versionCode`, so a new APK installs over the previous one and keeps the app's data.
+
+APKs are signed with `android/signing/kinetic-sideload.p12`, a key committed to the repository for sideloaded builds, so the signature stays the same from one build to the next. Because the key is public, it is not suitable for store distribution. To sign with a private key, set `KINETIC_KEYSTORE_FILE`, `KINETIC_KEYSTORE_PASSWORD`, `KINETIC_KEY_ALIAS` and `KINETIC_KEY_PASSWORD` in the build environment.
+
+To build locally, you need JDK 17, the Android SDK and Gradle 8.11:
+
+```bash
+gradle --project-dir android assembleRelease
+```
 
 ## Web app
 
@@ -85,6 +110,7 @@ Neither version sends data to a server, and neither has accounts, analytics or t
 
 ```
 docs/                       Web app (GitHub Pages): index.html, app.js, styles.css, sw.js, manifest
+android/                    Android app: Gradle project, WebView shell, launcher icons, signing key
 Kinetic.xcodeproj           Xcode project (single app target, shared scheme)
 Kinetic/
   App/                      App entry point and navigation
