@@ -51,6 +51,8 @@ android {
 }
 
 dependencies {
+    // Aligns kotlin-stdlib-jdk7/jdk8 (pulled in transitively) with kotlin-stdlib to avoid duplicate classes.
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.22"))
     implementation("androidx.activity:activity:1.9.3")
     implementation("androidx.core:core:1.13.1")
     implementation("androidx.webkit:webkit:1.12.1")
