@@ -1,10 +1,41 @@
 # Kinetic
 
-Kinetic is a strength-training log for iPhone. It records working sets per exercise, estimates one-rep max, detects personal records and visualises progress over time. All data is stored on the device.
+Kinetic is a strength-training log. It records working sets per exercise, estimates one-rep max, detects personal records and visualises progress over time. All data is stored on the device.
 
-- **Platform:** iOS 17.0 or later, iPhone, portrait
-- **Stack:** Swift, SwiftUI, Swift Charts. There are no third-party dependencies.
-- **Interface language:** Polish
+It ships in two forms with the same features and calculations:
+
+| | Native app | Web app |
+|---|---|---|
+| Location | `Kinetic/`, `Kinetic.xcodeproj` | `docs/` |
+| Runs on | iOS 17.0 or later | Any current browser, including Safari on iOS 15 or later |
+| Stack | Swift, SwiftUI, Swift Charts | HTML, CSS and JavaScript, with no build step or dependencies |
+| Storage | JSON file in the app's Documents directory | `localStorage` in the browser |
+
+The interface language is Polish.
+
+## Web app
+
+The web app is published with GitHub Pages at **https://mattcex.github.io/kinetic/**.
+
+### Installing on iPhone
+1. Open the link in Safari.
+2. Tap **Share**, then **Add to Home Screen**.
+
+Kinetic then opens full screen like an app. It works offline because a service worker caches it.
+
+### Storage and backups
+- Data is saved after every change in the browser's local storage.
+- An app added to the Home Screen has its own storage, separate from Safari. Add it to the Home Screen before you start logging.
+- Under **Settings → Kopia zapasowa** you can copy a backup code (`KNT1:…`) or save a backup file. Restoring either one moves the data to another device or browser, or recovers it after website data has been cleared.
+- No data is sent to a server.
+
+### Running locally
+
+```bash
+python -m http.server 8765 --directory docs
+```
+
+Then open http://localhost:8765.
 
 ## Features
 
@@ -46,13 +77,14 @@ Kinetic is a strength-training log for iPhone. It records working sets per exerc
 
 ## Data and privacy
 
-The app stores its data in a single JSON file, `kinetic-data.json`, in its Documents directory. It writes the file atomically after every change.
+The native app stores its data in a single JSON file, `kinetic-data.json`, in its Documents directory. It writes the file atomically after every change. The web app keeps the same data in `localStorage`.
 
-Kinetic makes no network requests and has no accounts, analytics or tracking.
+Neither version sends data to a server, and neither has accounts, analytics or tracking. The web app only downloads its own files from GitHub Pages.
 
 ## Project structure
 
 ```
+docs/                       Web app (GitHub Pages): index.html, app.js, styles.css, sw.js, manifest
 Kinetic.xcodeproj           Xcode project (single app target, shared scheme)
 Kinetic/
   App/                      App entry point and navigation
