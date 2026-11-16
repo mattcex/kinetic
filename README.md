@@ -1,8 +1,8 @@
 # Kinetic
 
-Kinetic is a strength-training log. It records working sets per exercise, estimates one-rep max, detects personal records and visualises progress over time. All data is stored on the device.
+Kinetic is a strength-training log. It records working sets for weighted and bodyweight exercises, estimates one-rep max, detects personal records and visualises progress over time. It also tracks body weight and measurements and derives the physique indices most relevant to people who train. All data is stored on the device.
 
-It ships in three forms with the same features and calculations:
+It ships in three forms:
 
 | | iOS app | Web app | Android app |
 |---|---|---|---|
@@ -10,6 +10,9 @@ It ships in three forms with the same features and calculations:
 | Runs on | iOS 17.0 or later | Any current browser, including Safari on iOS 15 or later | Android 7.0 (API 24) or later |
 | Stack | Swift, SwiftUI, Swift Charts | HTML, CSS and JavaScript, with no build step or dependencies | The web app bundled in a native WebView shell (Java) |
 | Storage | JSON file in the app's Documents directory | `localStorage` in the browser | `localStorage` inside the app |
+| Features | Weighted exercises, overview, activity calendar, charts | Everything described below | Same as the web app |
+
+The web and Android apps are the actively developed versions. The native iOS app covers weighted-exercise logging only. It does not have bodyweight exercises, custom categories or the body and physique screen.
 
 The interface language is Polish.
 
@@ -57,48 +60,76 @@ Kinetic then opens full screen like an app. It works offline because a service w
 ### Running locally
 
 ```bash
-python -m http.server 8765 --directory docs
+python -m http.server 8781 --directory docs
 ```
 
-Then open http://localhost:8765.
+Then open http://localhost:8781.
 
 ## Features
 
+### Exercises
+- Every exercise has a name, a category and a type, and all three can be edited later.
+- **Categories:**
+  - Built in: chest, back, legs, glutes, shoulders, arms, core and other.
+  - Custom categories can be created from the exercise form and removed under Settings. Exercises in a removed category move to "other".
+- **Types:**
+  - **Weighted:** the load is the weight on the bar or machine.
+  - **Bodyweight**, such as push-ups or pull-ups: you log repetitions, and optionally added weight for weighted dips or pull-ups.
+- A list of common lifts, including bodyweight ones, can be picked to fill in the form.
+
 ### Logging
-- Exercises have a name and a muscle group. The seven groups are chest, back, legs, shoulders, arms, core and other. A list of common lifts can be picked to fill in the form.
 - A set entry records:
-  - weight in kg, typed in directly or adjusted in 2.5 kg steps or quick steps of 5 kg and 10 kg
-  - repetitions (1–50) and sets (1–20)
+  - weight in kg (added weight for bodyweight exercises), typed in directly or adjusted in 2.5 kg steps or quick steps of 5 kg and 10 kg
+  - repetitions (1–100, or 1–300 for bodyweight) and sets (1–20)
   - the date, which cannot be in the future
 - The entry form starts with the values of the previous entry for the same exercise.
-- An entry that beats every earlier estimated 1RM for its exercise is marked as a personal record and confirmed with haptic feedback.
+- An entry that beats every earlier score for its exercise is marked as a personal record and shown with an animation. The score is defined under [Calculations](#calculations).
 
 ### Overview
 - Training volume for the current week (Monday to Sunday), with the percentage change against the previous week.
 - A weekly goal of 2–7 training days, shown as a progress ring.
 - Streak of consecutive weeks with at least one session, the total number of sessions, and personal records from the last 30 days.
-- A 26-week activity calendar. Each day is shaded on five levels relative to the highest-volume day in the period. Tapping a day shows its date and volume.
-- An exercise list sorted by most recent activity. Each row shows the heaviest weight, a sparkline of the last 12 sessions and the change across them.
+- A physique summary: body weight, body fat and FFMI.
+- A 26-week activity calendar. Each day is shaded on five levels relative to the day with the most sets in the period. Tapping a day shows its sets and volume.
+- An exercise list sorted by most recent activity. Each row shows the best weight, or the best repetitions for bodyweight exercises, with a sparkline of the last 12 sessions and the change across them.
 
 ### Exercise detail
-- A progress chart for one of three metrics per training day: estimated 1RM, top weight or total volume.
+- A progress chart per training day for one of three metrics. Weighted exercises use estimated 1RM, top weight or volume. Bodyweight exercises use most repetitions in a set, total repetitions or added weight.
 - Time ranges of 1 month, 3 months, 6 months, 1 year or all time. Dragging across the chart shows the value for a single day.
-- Summary figures: best estimated 1RM, heaviest weight, number of sessions and lifetime volume.
-- Full history, with personal records marked. A long press on an entry deletes it.
+- Summary figures and the full history, with personal records marked and a delete button on each entry.
+
+### Body and physique
+- **Profile:** sex and height, which several formulas need.
+- **Measurements:** dated entries for body weight, waist, neck, hips, shoulders and an optional body-fat percentage from another method. Each entry stores only the fields you fill in, and a second entry on the same day updates the first.
+- **Weight chart:** shows the change over the selected range.
+- **Indices:** each shows its value and an indicative rating. They are body fat, FFMI, lean body mass, the V ratio, waist-to-height and waist-to-hip; see [Calculations](#calculations).
+- **Relative strength:** best estimated 1RM divided by body weight for each weighted exercise.
+- **DOTS:** shown when squat, bench press and deadlift are logged. The three lifts are recognised by exercise name.
 
 ### Data management
-- A deterministic 26-week sample dataset can be loaded to try the app.
-- All data can be erased from the overview menu.
+- A deterministic 26-week sample dataset, including bodyweight exercises and measurements, can be loaded to try the app.
+- All data can be erased under Settings.
 
 ## Calculations
 
 | Metric | Definition |
 |---|---|
-| Volume | `weight × reps × sets`, summed per day or per week |
+| Load | Weighted: the logged weight. Bodyweight: latest body weight plus added weight |
+| Volume | `load × reps × sets`, summed per day or per week |
 | Estimated 1RM | Epley formula: `weight × (1 + reps / 30)`; equals `weight` when `reps = 1` |
-| Personal record | An entry whose estimated 1RM is higher than every earlier entry for the same exercise |
+| Personal-record score | Estimated 1RM of the load. Bodyweight exercises assume 70 kg until a body weight is logged, so their records still rank by repetitions and added weight |
 | Session | A calendar day with at least one logged entry |
 | Weekly streak | Consecutive weeks (Monday-based) with at least one session. The current week counts only after it has a session. |
+| Body fat (US Navy) | Men: `495 / (1.0324 − 0.19077·log10(waist − neck) + 0.15456·log10(height)) − 450`. Women: `495 / (1.29579 − 0.35004·log10(waist + hips − neck) + 0.221·log10(height)) − 450`. All in cm. Uses the more recent of this estimate or a manually entered value |
+| Lean body mass | `weight × (1 − body fat)` |
+| FFMI | `lean mass / height²` (m), normalised to 1.8 m: `FFMI + 6.1 × (1.8 − height)` |
+| V ratio | `shoulder circumference / waist`; 1.618 is the "golden ratio" ideal |
+| Waist-to-height | `waist / height`; below 0.5 is the common health target |
+| Waist-to-hip | `waist / hips`; WHO thresholds are 0.90 for men and 0.85 for women |
+| Relative strength | `best estimated 1RM / body weight` |
+| DOTS | `total × 500 / (a + b·bw + c·bw² + d·bw³ + e·bw⁴)` with the published sex-specific DOTS coefficients, where total is squat + bench + deadlift as estimated 1RM |
+
+Ratings are indicative. Body-fat ranges follow the American Council on Exercise. FFMI ranges follow Kouri et al. (1995), with lower thresholds for women.
 
 ## Data and privacy
 

@@ -438,7 +438,8 @@ svg { display: block; }
 .pill {
   position: relative;
   z-index: 1;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   padding: 8px 0;
   border-radius: 99px;
   font-size: 13px;
@@ -451,8 +452,10 @@ svg { display: block; }
 
 .pill-thumb {
   position: absolute;
-  top: 4px; bottom: 4px; left: 4px;
-  width: 0;
+  top: 4px; bottom: 4px;
+  /* Pills share the width equally, so the highlight follows the selected index. */
+  left: calc(4px + (100% - 8px) * var(--i, 0) / var(--n, 1));
+  width: calc((100% - 8px) / var(--n, 1));
   border-radius: 99px;
   background: var(--grad);
   box-shadow: 0 0 14px rgba(57, 211, 83, 0.45);
@@ -786,6 +789,105 @@ textarea.code {
 .cel-s { font-size: 13px; color: var(--t3); }
 
 @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+
+/* ---------- Body & physique ---------- */
+
+.row-between { display: flex; align-items: center; justify-content: space-between; }
+.chev { color: var(--t3); }
+.nav-actions { display: flex; gap: 10px; }
+
+.note.tight { margin: 10px 0 14px; }
+.note.small { font-size: 12px; color: var(--t3); margin-top: 10px; }
+.note.center { text-align: center; margin: -4px 0 14px; font-size: 12px; color: var(--t3); }
+.note b { color: #fff; font-weight: 600; }
+
+.body-card { display: block; transition: transform 0.2s var(--ease); }
+.body-card:active { transform: scale(0.98); }
+
+.trio, .quad { display: grid; gap: 8px; margin-top: 14px; }
+.trio { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.quad { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 0; padding: 16px 14px; }
+.trio > div, .quad > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.trio b, .quad b { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.quad b { font-size: 17px; }
+.trio b small, .quad b small { margin-left: 2px; font-size: 11px; font-weight: 500; color: var(--t2); }
+.trio span, .quad span { font-size: 12px; font-weight: 500; color: var(--t3); }
+
+.cta { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; border-color: rgba(57, 211, 83, 0.3); }
+.cta .note { margin: 0; flex: 1; }
+
+.idx { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.idx .k { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t3); }
+.idx .v { margin-top: 2px; font-size: 26px; }
+.idx .v small { font-size: 12px; }
+.idx .muted-v { color: var(--t3); }
+.hint { font-size: 11px; line-height: 1.35; color: var(--t3); }
+
+.tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag.good { color: var(--accent); background: rgba(57, 211, 83, 0.13); }
+.tag.info { color: #3BC9DB; background: rgba(59, 201, 219, 0.13); }
+.tag.mid { color: #F5C451; background: rgba(245, 196, 81, 0.13); }
+.tag.bad { color: var(--danger); background: rgba(255, 92, 92, 0.13); }
+.tag.neutral { color: var(--t2); background: rgba(255, 255, 255, 0.07); }
+
+.str { padding: 8px 16px; }
+.str-dots { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.str-dots .k { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; color: var(--t3); }
+.dots-v { font-size: 34px; font-weight: 300; font-variant-numeric: tabular-nums; }
+.dots-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right; min-width: 0; }
+.str-row { padding: 12px 0; }
+.str-row + .str-row { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.str-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.str-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.str-ratio { color: var(--t2); font-size: 14px; white-space: nowrap; }
+.str-ratio b { color: #fff; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.str-bar { height: 6px; margin: 8px 0 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+.str-bar i { display: block; height: 100%; border-radius: 3px; background: var(--grad); box-shadow: 0 0 10px rgba(57, 211, 83, 0.5); }
+
+.h-main { min-width: 0; }
+.h-main .h-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Forms in sheets ---------- */
+
+.types { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.types .gchip, .gchip.add { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.types .gchip { font-size: 14px; padding: 13px 6px; }
+.gchip.add { color: var(--accent); border-style: dashed; border-color: rgba(57, 211, 83, 0.4); }
+
+.inline-add { display: flex; gap: 8px; margin-top: 10px; }
+.text-input.sm { padding: 12px 14px; font-size: 16px; border-radius: 16px; }
+.btn-primary.sm { width: auto; padding: 12px 18px; font-size: 15px; box-shadow: none; flex: none; }
+
+.sug small { display: block; margin-top: 2px; font-size: 10px; color: var(--accent); font-weight: 600; }
+
+.field { display: flex; align-items: center; gap: 10px; }
+.field > span, .field-row > span { flex: none; font-size: 14px; font-weight: 500; color: var(--t2); }
+.mgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 4px; }
+.mfield { flex-direction: column; align-items: stretch; gap: 6px; }
+.field-row { display: flex; align-items: center; gap: 8px; }
+.mfield .text-input { padding: 14px; font-size: 18px; border-radius: 16px; min-width: 0; }
+
+.custom-groups { display: flex; flex-wrap: wrap; gap: 8px; }
+.cg {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cg button { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--t3); }
+.cg button:active { color: var(--danger); background: rgba(255, 92, 92, 0.15); }
 
 @media (max-width: 359px) {
   .spark { display: none; }

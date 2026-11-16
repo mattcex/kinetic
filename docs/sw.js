@@ -1,5 +1,5 @@
 /* Network-first service worker: always fresh when online, works offline from cache. */
-var CACHE = 'kinetic-v1';
+var CACHE = 'kinetic-v2';
 var ASSETS = [
   './',
   'index.html',
