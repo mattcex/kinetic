@@ -58,4 +58,6 @@ dependencies {
     implementation("androidx.webkit:webkit:1.12.1")
     // Kinetic Pro one-time purchase.
     implementation("com.android.billingclient:billing:8.0.0")
+    // Billing pulls in an old androidx.fragment; registerForActivityResult needs 1.3.0 or later.
+    implementation("androidx.fragment:fragment:1.8.5")
 }
