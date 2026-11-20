@@ -12,7 +12,7 @@ android {
         targetSdk = 35
         // CI passes the workflow run number so every build installs as an update.
         versionCode = (System.getenv("VERSION_CODE") ?: "1").toInt()
-        versionName = "1.0"
+        versionName = "1.2"
     }
 
     signingConfigs {
@@ -56,4 +56,6 @@ dependencies {
     implementation("androidx.activity:activity:1.9.3")
     implementation("androidx.core:core:1.13.1")
     implementation("androidx.webkit:webkit:1.12.1")
+    // Kinetic Pro one-time purchase.
+    implementation("com.android.billingclient:billing:8.0.0")
 }

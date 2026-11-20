@@ -1,9 +1,10 @@
 /* Network-first service worker: always fresh when online, works offline from cache. */
-var CACHE = 'kinetic-v2';
+var CACHE = 'kinetic-v3';
 var ASSETS = [
   './',
   'index.html',
   'styles.css',
+  'i18n.js',
   'app.js',
   'manifest.webmanifest',
   'icons/apple-touch-icon.png',

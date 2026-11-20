@@ -30,8 +30,15 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.webkit.WebViewAssetLoader;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Hosts the Kinetic web app (bundled from /docs as APK assets) in a full-screen WebView.
@@ -44,6 +51,8 @@ public class MainActivity extends ComponentActivity {
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
+    /** Google Play Billing for Kinetic Pro; only created when the app was installed from Google Play. */
+    private ProStore proStore;
 
     private final ActivityResultLauncher<String[]> openDocument =
             registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
@@ -134,13 +143,18 @@ public class MainActivity extends ComponentActivity {
             public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
                 new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                         .setMessage(message)
-                        .setPositiveButton("OK", (dialog, which) -> result.confirm())
-                        .setNegativeButton("Anuluj", (dialog, which) -> result.cancel())
+                        .setPositiveButton(android.R.string.ok, (dialog, which) -> result.confirm())
+                        .setNegativeButton(android.R.string.cancel, (dialog, which) -> result.cancel())
                         .setOnCancelListener(dialog -> result.cancel())
                         .show();
                 return true;
             }
         });
+
+        if (ProStore.installedFromPlay(this)) {
+            proStore = new ProStore(this, state -> webView.evaluateJavascript(
+                    "window.kineticProUpdate && window.kineticProUpdate(" + state + ")", null));
+        }
 
         webView.addJavascriptInterface(new Bridge(), "AndroidBridge");
 
@@ -186,6 +200,9 @@ public class MainActivity extends ComponentActivity {
 
     @Override
     protected void onDestroy() {
+        if (proStore != null) {
+            proStore.close();
+        }
         webView.destroy();
         super.onDestroy();
     }
@@ -214,6 +231,67 @@ public class MainActivity extends ComponentActivity {
                     startActivity(Intent.createChooser(send, title));
                 } catch (ActivityNotFoundException ignored) {
                     // Nothing can receive the backup; the code can still be copied.
+                }
+            });
+        }
+
+        /** Writes a backup or CSV export to the cache and opens the share sheet with it as a file. */
+        @JavascriptInterface
+        public void shareFile(String name, String mime, String content) {
+            runOnUiThread(() -> {
+                String safeName = name.replaceAll("[^A-Za-z0-9._-]", "_");
+                File dir = new File(getCacheDir(), "exports");
+                File file = new File(dir, safeName);
+                try {
+                    if (!dir.isDirectory() && !dir.mkdirs()) {
+                        throw new IOException("Cannot create " + dir);
+                    }
+                    try (OutputStream out = new FileOutputStream(file)) {
+                        out.write(content.getBytes(StandardCharsets.UTF_8));
+                    }
+                    Uri uri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".files", file);
+                    Intent send = new Intent(Intent.ACTION_SEND);
+                    send.setType(mime);
+                    send.putExtra(Intent.EXTRA_STREAM, uri);
+                    send.putExtra(Intent.EXTRA_SUBJECT, safeName);
+                    send.setClipData(ClipData.newRawUri(safeName, uri));
+                    send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(send, safeName));
+                } catch (IOException | IllegalArgumentException | ActivityNotFoundException e) {
+                    share(safeName, content);
+                }
+            });
+        }
+
+        /** True only for a copy installed from Google Play, where Kinetic Pro is sold. */
+        @JavascriptInterface
+        public boolean billingSupported() {
+            return proStore != null;
+        }
+
+        @JavascriptInterface
+        public void proRefresh() {
+            runOnUiThread(() -> {
+                if (proStore != null) {
+                    proStore.refresh(null);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void proRestore() {
+            runOnUiThread(() -> {
+                if (proStore != null) {
+                    proStore.refresh("restored");
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void proBuy() {
+            runOnUiThread(() -> {
+                if (proStore != null) {
+                    proStore.buy();
                 }
             });
         }

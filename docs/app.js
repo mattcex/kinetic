@@ -6,62 +6,67 @@
   // ---------------------------------------------------------------------------
 
   var STORE_KEY = 'kinetic.v1';
+  var PREFS_KEY = 'kinetic.prefs';
+  var PRO_KEY = 'kinetic.pro';
   var TIP_KEY = 'kinetic.tip.dismissed';
+  var VERSION = '1.2';
   var DAY = 86400000;
   var HEAT_WEEKS = 26;
   var BACKUP_PREFIX = 'KNT1:';
   /** Ranks bodyweight sets against each other when no body weight has been logged yet. */
   var DEFAULT_BODY_WEIGHT = 70;
 
-  var BUILTIN_GROUPS = [
-    { id: 'chest', label: 'Klatka' },
-    { id: 'back', label: 'Plecy' },
-    { id: 'legs', label: 'Nogi' },
-    { id: 'glutes', label: 'Pośladki' },
-    { id: 'shoulders', label: 'Barki' },
-    { id: 'arms', label: 'Ramiona' },
-    { id: 'core', label: 'Core' },
-    { id: 'other', label: 'Inne' }
-  ];
+  var BUILTIN_GROUPS = ['chest', 'back', 'legs', 'glutes', 'shoulders', 'arms', 'core', 'other'];
 
   var METRICS = {
-    weight: [
-      { id: 'oneRM', label: 'Szac. 1RM', unit: 'kg' },
-      { id: 'maxWeight', label: 'Ciężar', unit: 'kg' },
-      { id: 'volume', label: 'Wolumen', unit: 'kg' }
-    ],
-    bodyweight: [
-      { id: 'maxReps', label: 'Maks. powt.', unit: 'powt.' },
-      { id: 'totalReps', label: 'Powtórzenia', unit: 'powt.' },
-      { id: 'load', label: 'Obciążenie', unit: 'kg' }
-    ]
+    weight: [{ id: 'oneRM', unit: 'kg' }, { id: 'maxWeight', unit: 'kg' }, { id: 'volume', unit: 'kg' }],
+    bodyweight: [{ id: 'maxReps', unit: 'reps' }, { id: 'totalReps', unit: 'reps' }, { id: 'load', unit: 'kg' }]
   };
 
   var RANGES = [
-    { id: '1m', label: '1M', months: 1, caption: 'w ostatnim miesiącu' },
-    { id: '3m', label: '3M', months: 3, caption: 'w 3 miesiące' },
-    { id: '6m', label: '6M', months: 6, caption: 'w pół roku' },
-    { id: '1y', label: '1R', months: 12, caption: 'w rok' },
-    { id: 'all', label: 'Całość', months: 0, caption: 'od początku' }
+    { id: '1m', months: 1 }, { id: '3m', months: 3 }, { id: '6m', months: 6 }, { id: '1y', months: 12 }, { id: 'all', months: 0 }
   ];
 
+  /** Quick-add exercises: catalog key of the name, muscle group, type. */
   var SUGGESTIONS = [
-    ['Wyciskanie leżąc', 'chest', 'weight'], ['Przysiad', 'legs', 'weight'], ['Martwy ciąg', 'back', 'weight'],
-    ['Wyciskanie nad głowę', 'shoulders', 'weight'], ['Hip thrust', 'glutes', 'weight'], ['Wiosłowanie sztangą', 'back', 'weight'],
-    ['Pompki', 'chest', 'bodyweight'], ['Podciąganie', 'back', 'bodyweight'], ['Pompki na poręczach', 'chest', 'bodyweight'],
-    ['Przysiad bułgarski', 'legs', 'weight'], ['Martwy ciąg rumuński', 'glutes', 'weight'], ['Uginanie ze sztangą', 'arms', 'weight'],
-    ['Unoszenie nóg w zwisie', 'core', 'bodyweight'], ['Wykroki', 'legs', 'weight']
+    ['bench', 'chest', 'weight'], ['squat', 'legs', 'weight'], ['deadlift', 'back', 'weight'],
+    ['ohp', 'shoulders', 'weight'], ['hipThrust', 'glutes', 'weight'], ['row', 'back', 'weight'],
+    ['pushup', 'chest', 'bodyweight'], ['pullup', 'back', 'bodyweight'], ['dip', 'chest', 'bodyweight'],
+    ['bulgarian', 'legs', 'weight'], ['rdl', 'glutes', 'weight'], ['curl', 'arms', 'weight'],
+    ['legRaise', 'core', 'bodyweight'], ['lunge', 'legs', 'weight']
   ];
 
   var BODY_FIELDS = ['weight', 'bodyFat', 'waist', 'neck', 'hips', 'shoulders'];
   var BODY_META = {
-    weight: { label: 'Waga', unit: 'kg', min: 25, max: 350 },
-    bodyFat: { label: 'Tkanka tłuszczowa', unit: '%', min: 2, max: 70 },
-    waist: { label: 'Talia', unit: 'cm', min: 40, max: 250 },
-    neck: { label: 'Szyja', unit: 'cm', min: 20, max: 80 },
-    hips: { label: 'Biodra', unit: 'cm', min: 50, max: 250 },
-    shoulders: { label: 'Barki', unit: 'cm', min: 60, max: 250 }
+    weight: { unit: 'kg', min: 25, max: 350 },
+    bodyFat: { unit: '%', min: 2, max: 70 },
+    waist: { unit: 'cm', min: 40, max: 250 },
+    neck: { unit: 'cm', min: 20, max: 80 },
+    hips: { unit: 'cm', min: 50, max: 250 },
+    shoulders: { unit: 'cm', min: 60, max: 250 }
   };
+
+  /** Built-in recovery activities with their icon and a default duration in minutes. */
+  var RECOVERY_TYPES = [
+    { id: 'sauna', icon: 'flame', minutes: 15 },
+    { id: 'walk', icon: 'walk', minutes: 30 },
+    { id: 'stretch', icon: 'wave', minutes: 15 },
+    { id: 'cold', icon: 'snow', minutes: 3 },
+    { id: 'massage', icon: 'hand', minutes: 30 },
+    { id: 'yoga', icon: 'leaf', minutes: 30 },
+    { id: 'foam', icon: 'roll', minutes: 10 }
+  ];
+  var CUSTOM_RECOVERY_MINUTES = 20;
+  var RECOVERY_MAX = 600;
+
+  /** Accent palettes (Kinetic Pro). rgb and rgb2 feed the CSS variables --acc and --acc2. */
+  var THEMES = [
+    { id: 'green', rgb: '57, 211, 83', rgb2: '46, 230, 166', heat: ['#0E4429', '#006D32', '#26A641', '#39D353'] },
+    { id: 'blue', rgb: '64, 156, 255', rgb2: '90, 200, 250', heat: ['#0A2540', '#0F4A86', '#2378D6', '#409CFF'] },
+    { id: 'violet', rgb: '167, 120, 255', rgb2: '222, 130, 255', heat: ['#24163F', '#43287F', '#7650D6', '#A778FF'] },
+    { id: 'amber', rgb: '255, 170, 40', rgb2: '255, 214, 90', heat: ['#3D2606', '#7A4A0B', '#D07D16', '#FFAA28'] },
+    { id: 'mono', rgb: '236, 238, 242', rgb2: '170, 180, 195', heat: ['#26282C', '#4A4E55', '#8A9099', '#ECEEF2'] }
+  ];
 
   var ICONS = {
     plus: 'M12 5v14M5 12h14',
@@ -87,27 +92,120 @@
     share: 'M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v6.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V13',
     copy: 'M10.5 9h9A1.5 1.5 0 0 1 21 10.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 9 19.5v-9A1.5 1.5 0 0 1 10.5 9zM15 9V4.5A1.5 1.5 0 0 0 13.5 3h-9A1.5 1.5 0 0 0 3 4.5v9A1.5 1.5 0 0 0 4.5 15H9',
     restore: 'M12 3v12M7.5 10.5L12 15l4.5-4.5M5 20h14',
-    chart: 'M4 19h16M4 15l5-5 4 4 7-7'
+    chart: 'M4 19h16M4 15l5-5 4 4 7-7',
+    walk: 'M13 5.75a1.75 1.75 0 1 0 0-3.5 1.75 1.75 0 0 0 0 3.5zM12.5 8L11 14l-2.5 7M11 14l3 3 .5 4M12.3 8.8L9 11l-1 2.5M12.3 8.8l3 2.2 2 1.5',
+    snow: 'M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5L12 7l2.5-2.5M9.5 19.5L12 17l2.5 2.5',
+    wave: 'M3 9c2-2.5 4-2.5 6 0s4 2.5 6 0 4-2.5 6 0M3 15c2-2.5 4-2.5 6 0s4 2.5 6 0 4-2.5 6 0',
+    hand: 'M8 13V6.5a1.5 1.5 0 0 1 3 0V11M11 10.5V5a1.5 1.5 0 0 1 3 0v6M14 10.5V6.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.5a5 5 0 0 1-4-2l-2.8-3.8a1.5 1.5 0 0 1 2.3-1.9L8 15',
+    leaf: 'M5 19C5 10.5 10.5 5 19 5c0 8.5-5.5 14-14 14zM5 19l8-8',
+    roll: 'M7 7h10a5 5 0 0 1 0 10H7M7 7a2.5 5 0 0 0 0 10 2.5 5 0 0 0 0-10z',
+    heart: 'M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z',
+    lock: 'M7.5 11V8a4.5 4.5 0 0 1 9 0v3M6 11h12a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 18 21H6a1.5 1.5 0 0 1-1.5-1.5v-7A1.5 1.5 0 0 1 6 11z',
+    crown: 'M3.5 8l4.5 4 4-6.5 4 6.5 4.5-4-1.8 10.5H5.3zM5.5 21h13',
+    palette: 'M12 21a9 9 0 1 1 9-9c0 2.2-1.6 3.4-3.6 3.4H15a2 2 0 0 0-1.6 3.2c.4.5.6 1 .6 1.4 0 .6-.8 1-2 1zM7.5 12h.01M9.5 7.5h.01M14.5 7.5h.01',
+    file: 'M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8zM14 3v5h5M8.5 13h7M8.5 17h7',
+    layers: 'M12 3l9 4.5-9 4.5-9-4.5zM3 12l9 4.5 9-4.5M3 16.5L12 21l9-4.5',
+    gauge: 'M4.5 18a7.5 7.5 0 1 1 15 0M12 18l3.5-4.5'
   };
+
+  // ---------------------------------------------------------------------------
+  // Preferences & language
+  // ---------------------------------------------------------------------------
+
+  /** Per-device settings, kept apart from training data so backups stay portable. */
+  var prefs = { lang: 'auto', theme: 'green' };
+  var lang = 'pl';
+  var CATALOG = window.KINETIC_I18N || { pl: {}, en: {} };
+
+  function loadPrefs() {
+    try {
+      var p = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {};
+      if (p.lang === 'pl' || p.lang === 'en' || p.lang === 'auto') prefs.lang = p.lang;
+      if (typeof p.theme === 'string' && themeById(p.theme)) prefs.theme = p.theme;
+    } catch (err) { /* keep defaults */ }
+  }
+
+  function savePrefs() {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (err) { /* ignore */ }
+  }
+
+  /** First Polish or English entry in the device's language list; English otherwise. */
+  function deviceLang() {
+    var list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
+    for (var i = 0; i < list.length; i++) {
+      var code = String(list[i]).toLowerCase();
+      if (code.indexOf('pl') === 0) return 'pl';
+      if (code.indexOf('en') === 0) return 'en';
+    }
+    return 'en';
+  }
+
+  function applyLang() {
+    lang = prefs.lang === 'auto' ? deviceLang() : prefs.lang;
+    document.documentElement.lang = lang;
+    buildFormatters();
+  }
+
+  /** Translated text for key; {0}, {1}… are replaced by the extra arguments. */
+  function tr(key) {
+    var s = CATALOG[lang] && CATALOG[lang][key];
+    if (s === undefined) s = CATALOG.en[key];
+    if (s === undefined) s = key;
+    if (arguments.length > 1) {
+      var args = arguments;
+      s = String(s).replace(/\{(\d)\}/g, function (m, i) { return args[Number(i) + 1]; });
+    }
+    return s;
+  }
+
+  /** Word form for n: Polish has one/few/many, English one/other. */
+  function pn(n, key) {
+    var forms = (CATALOG[lang] && CATALOG[lang][key]) || CATALOG.en[key] || [key, key, key];
+    if (lang !== 'pl') return n === 1 ? forms[0] : forms[1];
+    if (n === 1) return forms[0];
+    var m10 = n % 10, m100 = n % 100;
+    return (m10 >= 2 && m10 <= 4 && !(m100 >= 12 && m100 <= 14)) ? forms[1] : forms[2];
+  }
+
+  function tn(n, key) { return n + ' ' + pn(n, key); }
+
+  function themeById(id) {
+    for (var i = 0; i < THEMES.length; i++) if (THEMES[i].id === id) return THEMES[i];
+    return null;
+  }
+
+  /** Accent colours are CSS variables, so every view, chart and the heatmap follow the theme. */
+  function applyTheme() {
+    var th = hasPro() ? (themeById(prefs.theme) || THEMES[0]) : THEMES[0];
+    var s = document.documentElement.style;
+    s.setProperty('--acc', th.rgb);
+    s.setProperty('--acc2', th.rgb2);
+    th.heat.forEach(function (c, i) { s.setProperty('--l' + (i + 1), c); });
+  }
 
   // ---------------------------------------------------------------------------
   // State & persistence
   // ---------------------------------------------------------------------------
 
   function emptyState(goal) {
-    return { exercises: [], entries: [], goal: goal || 4, groups: [], profile: { sex: null, height: null }, body: [] };
+    return {
+      exercises: [], entries: [], goal: goal || 4, groups: [], profile: { sex: null, height: null }, body: [],
+      recovery: [], recoveryTypes: []
+    };
   }
 
   var state = emptyState(4);
   var ui = {
     route: null, metricW: 'oneRM', metricB: 'maxReps', range: '6m', bodyRange: 'all',
-    historyLimit: 12, bodyLimit: 8, homeScroll: 0, fromHome: false
+    historyLimit: 12, bodyLimit: 8, recLimit: 12, homeScroll: 0, fromHome: false
   };
   var detailCtx = null;
   var bodyCtx = null;
+  var recCtx = null;
   var logCtx = null;
   var exCtx = null;
   var profileCtx = null;
+  var recLogCtx = null;
   var app = document.getElementById('app');
 
   /** Native helpers provided by the Android app (MainActivity.Bridge); absent in browsers. */
@@ -128,6 +226,11 @@
       isNum(e.date) && isNum(e.weight) && e.weight >= 0 && isNum(e.reps) && e.reps > 0 && isNum(e.sets) && e.sets > 0;
   }
 
+  function validRecovery(r) {
+    return !!r && typeof r.id === 'string' && typeof r.type === 'string' && isNum(r.date) &&
+      isNum(r.minutes) && r.minutes >= 1 && r.minutes <= RECOVERY_MAX;
+  }
+
   function cleanBody(b) {
     var out = { id: b.id, date: b.date };
     BODY_FIELDS.forEach(function (f) { if (isNum(b[f]) && b[f] > 0) out[f] = b[f]; });
@@ -138,11 +241,16 @@
     return BODY_FIELDS.some(function (f) { return b[f] !== undefined; });
   }
 
-  function normalize(data) {
-    var s = emptyState(clampGoal(data.goal));
-    s.groups = (Array.isArray(data.groups) ? data.groups : []).filter(function (g) {
+  /** User-defined {id, label} items: exercise categories and recovery activities. */
+  function namedList(list) {
+    return (Array.isArray(list) ? list : []).filter(function (g) {
       return g && typeof g.id === 'string' && typeof g.label === 'string' && g.label.trim();
     });
+  }
+
+  function normalize(data) {
+    var s = emptyState(clampGoal(data.goal));
+    s.groups = namedList(data.groups);
     s.exercises = (Array.isArray(data.exercises) ? data.exercises : [])
       .filter(function (x) { return x && typeof x.id === 'string' && typeof x.name === 'string'; })
       .map(function (x) {
@@ -161,6 +269,10 @@
       .filter(function (b) { return b && typeof b.id === 'string' && isNum(b.date); })
       .map(cleanBody)
       .filter(hasMeasurement);
+    s.recoveryTypes = namedList(data.recoveryTypes);
+    s.recovery = (Array.isArray(data.recovery) ? data.recovery : [])
+      .filter(validRecovery)
+      .map(function (r) { return { id: r.id, date: r.date, type: r.type, minutes: Math.round(r.minutes) }; });
     return s;
   }
 
@@ -182,7 +294,7 @@
       localStorage.setItem(STORE_KEY, JSON.stringify(state));
       return true;
     } catch (err) {
-      toast('Nie udało się zapisać danych');
+      toast(tr('saveFailed'));
       return false;
     }
   }
@@ -195,12 +307,18 @@
   // Formatting
   // ---------------------------------------------------------------------------
 
-  var nfInt = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 0 });
-  var nfW = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
-  var nf2 = new Intl.NumberFormat('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  var dfDayMonth = new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short' });
-  var dfLong = new Intl.DateTimeFormat('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
-  var dfMonth = new Intl.DateTimeFormat('pl-PL', { month: 'short' });
+  var nfInt, nfW, nf2, dfDayMonth, dfLong, dfMonth, dfWeekday;
+
+  function buildFormatters() {
+    var loc = lang === 'pl' ? 'pl-PL' : 'en-GB';
+    nfInt = new Intl.NumberFormat(loc, { maximumFractionDigits: 0 });
+    nfW = new Intl.NumberFormat(loc, { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+    nf2 = new Intl.NumberFormat(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    dfDayMonth = new Intl.DateTimeFormat(loc, { day: 'numeric', month: 'short' });
+    dfLong = new Intl.DateTimeFormat(loc, { weekday: 'long', day: 'numeric', month: 'long' });
+    dfMonth = new Intl.DateTimeFormat(loc, { month: 'short' });
+    dfWeekday = new Intl.DateTimeFormat(loc, { weekday: 'narrow' });
+  }
 
   function fmtInt(v) { return nfInt.format(Math.round(v)); }
   function fmtW(v) { return nfW.format(v); }
@@ -211,17 +329,31 @@
     return (p >= 10 ? String(Math.round(p)) : nfW.format(p)) + '%';
   }
 
-  function plural(n, one, few, many) {
-    if (n === 1) return one;
-    var m10 = n % 10, m100 = n % 100;
-    return (m10 >= 2 && m10 <= 4 && !(m100 >= 12 && m100 <= 14)) ? few : many;
+  /** Duration such as "45 min" or "1 h 05 min". */
+  function fmtDur(min) {
+    min = Math.round(min);
+    if (min < 60) return min + ' min';
+    var h = Math.floor(min / 60), m = min % 60;
+    return h + ' h' + (m ? ' ' + pad2(m) + ' min' : '');
   }
+
+  /** Large duration readout: minutes up to two hours, then hours with one decimal. */
+  function bigDur(min) {
+    return min >= 120 ? { num: fmtW(Math.round(min / 6) / 10), unit: 'h' } : { num: fmtInt(min), unit: 'min' };
+  }
+
+  function unitLabel(unit) { return unit === 'reps' ? tr('u_reps') : unit; }
 
   function pad2(n) { return n < 10 ? '0' + n : String(n); }
 
   function isoDay(t) {
     var d = new Date(t);
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  function isoMinute(t) {
+    var d = new Date(t);
+    return isoDay(t) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
   }
 
   function esc(s) {
@@ -244,7 +376,11 @@
     return isFinite(v) ? v : NaN;
   }
 
-  function inputNum(v) { return String(Math.round(v * 100) / 100).replace('.', ','); }
+  /** Number for an input field, using the decimal separator of the current language. */
+  function inputNum(v) {
+    var s = String(Math.round(v * 100) / 100);
+    return lang === 'pl' ? s.replace('.', ',') : s;
+  }
 
   // ---------------------------------------------------------------------------
   // Dates
@@ -263,10 +399,10 @@
 
   function relative(t) {
     var days = Math.round((startOfDay(Date.now()) - startOfDay(t)) / DAY);
-    if (days < 1) return 'dziś';
-    if (days === 1) return 'wczoraj';
-    if (days < 14) return days + ' dni temu';
-    return Math.floor(days / 7) + ' tyg. temu';
+    if (days < 1) return tr('today');
+    if (days === 1) return tr('yesterday');
+    if (days < 14) return tr('daysAgo', days);
+    return tr('weeksAgo', Math.floor(days / 7));
   }
 
   /** Value of a <input type="date">: today keeps the current time, other days use noon. */
@@ -293,10 +429,7 @@
     state.body.slice().sort(function (a, b) { return a.date - b.date; }).forEach(function (b) {
       BODY_FIELDS.forEach(function (f) { if (b[f] !== undefined) latest[f] = { value: b[f], date: b.date }; });
     });
-    var groupLabels = {};
-    BUILTIN_GROUPS.forEach(function (g) { groupLabels[g.id] = g.label; });
-    state.groups.forEach(function (g) { groupLabels[g.id] = g.label; });
-    cache = { exMap: exMap, latest: latest, groupLabels: groupLabels };
+    cache = { exMap: exMap, latest: latest };
     cacheVersion = dataVersion;
     return cache;
   }
@@ -304,8 +437,15 @@
   function findExercise(id) { return cached().exMap[id] || null; }
   function latestBody(field) { return cached().latest[field] || null; }
   function bodyWeightNow() { var w = latestBody('weight'); return w ? w.value : null; }
-  function groupLabel(id) { return cached().groupLabels[id] || 'Inne'; }
-  function allGroups() { return BUILTIN_GROUPS.concat(state.groups); }
+  function groupLabel(id) {
+    if (BUILTIN_GROUPS.indexOf(id) !== -1) return tr('g_' + id);
+    for (var i = 0; i < state.groups.length; i++) if (state.groups[i].id === id) return state.groups[i].label;
+    return tr('g_other');
+  }
+
+  function allGroups() {
+    return BUILTIN_GROUPS.map(function (id) { return { id: id, label: tr('g_' + id) }; }).concat(state.groups);
+  }
 
   function isBodyweight(exerciseId) {
     var ex = findExercise(exerciseId);
@@ -468,9 +608,9 @@
   }
 
   var LIFTS = [
-    { key: 'squat', label: 'Przysiad', test: function (n) { return /^przysiad|squat/.test(n) && !/bułgar|goblet|wykrok|split|przedni|front/.test(n); } },
-    { key: 'bench', label: 'Wyciskanie', test: function (n) { return /wyciskanie leżąc|bench/.test(n) && !/hantl|skos|incline|dumbbell/.test(n); } },
-    { key: 'deadlift', label: 'Martwy ciąg', test: function (n) { return /martwy ciąg|deadlift/.test(n) && !/rumuń|romanian|prostych|stiff/.test(n); } }
+    { key: 'squat', test: function (n) { return /^przysiad|squat/.test(n) && !/bułgar|goblet|wykrok|split|przedni|front/.test(n); } },
+    { key: 'bench', test: function (n) { return /wyciskanie leżąc|bench/.test(n) && !/hantl|skos|incline|dumbbell/.test(n); } },
+    { key: 'deadlift', test: function (n) { return /martwy ciąg|deadlift/.test(n) && !/rumuń|romanian|prostych|stiff/.test(n); } }
   ];
 
   function bestLift(test) {
@@ -494,8 +634,8 @@
       var v = navyBodyFat(sex, h, waist.value, neck.value, hips && hips.value);
       if (v !== null) navy = { value: v, date: Math.max(waist.date, neck.date) };
     }
-    if (manual && (!navy || manual.date >= navy.date)) { out.bodyFat = manual.value; out.bodyFatSource = 'wpisana ręcznie'; }
-    else if (navy) { out.bodyFat = navy.value; out.bodyFatSource = 'metoda US Navy'; }
+    if (manual && (!navy || manual.date >= navy.date)) { out.bodyFat = manual.value; out.bodyFatSource = 'bfManual'; }
+    else if (navy) { out.bodyFat = navy.value; out.bodyFatSource = 'bfNavy'; }
     else out.bodyFat = null;
 
     out.lbm = out.weight && out.bodyFat !== null ? out.weight * (1 - out.bodyFat / 100) : null;
@@ -519,7 +659,7 @@
         .filter(Boolean)
         .sort(function (a, b) { return b.ratio - a.ratio; })
         .slice(0, 6);
-      var lifts = LIFTS.map(function (l) { var b = bestLift(l.test); return b ? { label: l.label, value: b.value } : null; });
+      var lifts = LIFTS.map(function (l) { var b = bestLift(l.test); return b ? { label: tr('lift_' + l.key), value: b.value } : null; });
       if (sex && lifts[0] && lifts[1] && lifts[2]) {
         var total = lifts[0].value + lifts[1].value + lifts[2].value;
         out.dots = { value: dots(total, out.weight, sex), total: total, lifts: lifts };
@@ -528,54 +668,54 @@
     return out;
   }
 
-  function tone(label, t) { return { label: label, tone: t }; }
+  function tone(key, t) { return { label: tr(key), tone: t }; }
 
   function verdictBodyFat(v, sex) {
     if (!sex) return null;
     var t = sex === 'f' ? [14, 21, 25, 32] : [6, 14, 18, 25];
-    if (v < t[0]) return tone('Zawodniczy', 'info');
-    if (v < t[1]) return tone('Atletyczny', 'good');
-    if (v < t[2]) return tone('Fitness', 'good');
-    if (v < t[3]) return tone('Przeciętny', 'mid');
-    return tone('Wysoki', 'bad');
+    if (v < t[0]) return tone('vCompetition', 'info');
+    if (v < t[1]) return tone('vAthletic', 'good');
+    if (v < t[2]) return tone('vFitness', 'good');
+    if (v < t[3]) return tone('vAverage', 'mid');
+    return tone('vHigh', 'bad');
   }
 
   function verdictFFMI(v, sex) {
     if (!sex) return null;
     var t = sex === 'f' ? [14, 16, 17.5, 19, 21] : [18, 20, 22, 23, 25];
-    if (v < t[0]) return tone('Poniżej przeciętnej', 'mid');
-    if (v < t[1]) return tone('Przeciętny', 'neutral');
-    if (v < t[2]) return tone('Dobry', 'good');
-    if (v < t[3]) return tone('Bardzo dobry', 'good');
-    if (v < t[4]) return tone('Wybitny', 'info');
-    return tone('Granica naturalna', 'info');
+    if (v < t[0]) return tone('vBelowAverage', 'mid');
+    if (v < t[1]) return tone('vAverage', 'neutral');
+    if (v < t[2]) return tone('vGood', 'good');
+    if (v < t[3]) return tone('vVeryGood', 'good');
+    if (v < t[4]) return tone('vExcellent', 'info');
+    return tone('vNaturalLimit', 'info');
   }
 
   function verdictV(v) {
-    if (v >= 1.6) return tone('Złota proporcja', 'info');
-    if (v >= 1.45) return tone('Wyraźne V', 'good');
-    if (v >= 1.3) return tone('Dobra', 'neutral');
-    return tone('Prosta', 'mid');
+    if (v >= 1.6) return tone('vGolden', 'info');
+    if (v >= 1.45) return tone('vClearV', 'good');
+    if (v >= 1.3) return tone('vGoodRatio', 'neutral');
+    return tone('vStraight', 'mid');
   }
 
   function verdictWHtR(v) {
-    if (v < 0.4) return tone('Bardzo niski', 'mid');
-    if (v < 0.5) return tone('Zdrowy', 'good');
-    if (v < 0.6) return tone('Podwyższony', 'mid');
-    return tone('Wysoki', 'bad');
+    if (v < 0.4) return tone('vVeryLow', 'mid');
+    if (v < 0.5) return tone('vHealthy', 'good');
+    if (v < 0.6) return tone('vElevated', 'mid');
+    return tone('vHigh', 'bad');
   }
 
   function verdictWHR(v, sex) {
     if (!sex) return null;
-    return v <= (sex === 'f' ? 0.85 : 0.9) ? tone('Prawidłowy', 'good') : tone('Podwyższony', 'bad');
+    return v <= (sex === 'f' ? 0.85 : 0.9) ? tone('vNormal', 'good') : tone('vElevated', 'bad');
   }
 
   function verdictDOTS(v) {
-    if (v < 250) return tone('Początkujący', 'neutral');
-    if (v < 350) return tone('Średniozaawansowany', 'good');
-    if (v < 450) return tone('Zaawansowany', 'good');
-    if (v < 550) return tone('Elita', 'info');
-    return tone('Poziom światowy', 'info');
+    if (v < 250) return tone('vBeginner', 'neutral');
+    if (v < 350) return tone('vIntermediate', 'good');
+    if (v < 450) return tone('vAdvanced', 'good');
+    if (v < 550) return tone('vElite', 'info');
+    return tone('vWorldClass', 'info');
   }
 
   // ---------------------------------------------------------------------------
@@ -596,22 +736,27 @@
     var today = startOfDay(Date.now());
     var total = 182;
     var lifts = [
-      { name: 'Wyciskanie leżąc', group: 'chest', base: 70, gain: 22.5, reps: [3, 8] },
-      { name: 'Przysiad', group: 'legs', base: 90, gain: 35, reps: [3, 8] },
-      { name: 'Martwy ciąg', group: 'back', base: 110, gain: 40, reps: [2, 6] },
-      { name: 'Wyciskanie nad głowę', group: 'shoulders', base: 40, gain: 12.5, reps: [4, 8] },
-      { name: 'Podciąganie', group: 'back', type: 'bodyweight', base: -5, gain: 20, reps: [5, 10] },
-      { name: 'Hip thrust', group: 'glutes', base: 80, gain: 50, reps: [6, 10] },
-      { name: 'Pompki', group: 'chest', type: 'bodyweight', base: 0, gain: 0, reps: [15, 32] }
+      { key: 'bench', group: 'chest', base: 70, gain: 22.5, reps: [3, 8] },
+      { key: 'squat', group: 'legs', base: 90, gain: 35, reps: [3, 8] },
+      { key: 'deadlift', group: 'back', base: 110, gain: 40, reps: [2, 6] },
+      { key: 'ohp', group: 'shoulders', base: 40, gain: 12.5, reps: [4, 8] },
+      { key: 'pullup', group: 'back', type: 'bodyweight', base: -5, gain: 20, reps: [5, 10] },
+      { key: 'hipThrust', group: 'glutes', base: 80, gain: 50, reps: [6, 10] },
+      { key: 'pushup', group: 'chest', type: 'bodyweight', base: 0, gain: 0, reps: [15, 32] }
     ];
     lifts.forEach(function (l, i) { l.id = uid() + i; l.createdAt = addDays(today, -(total + 1 + i)); });
     var rotation = [[0, 3, 6], [1, 2, 5], [0, 1, 4], [2, 3, 4, 5, 6]];
     var skipped = { 7: true, 16: true };
-    var entries = [], body = [], session = 0;
+    var entries = [], body = [], recovery = [], session = 0;
+
+    function rest(type, at, minutes) {
+      recovery.push({ id: uid() + 'r' + recovery.length, type: type, date: Math.min(at, Date.now() - 60000), minutes: minutes });
+    }
 
     for (var off = total; off >= 0; off--) {
       var day = addDays(today, -off);
       var progress = (total - off) / total;
+      var wd = new Date(day).getDay();
       if (off % 7 === 0) {
         var m = { id: uid() + 'b' + off, date: day + 7 * 3600000, weight: Math.round((84 - 3.6 * progress + (rnd() - 0.5) * 0.8) * 10) / 10 };
         if (off % 28 === 0) {
@@ -622,8 +767,13 @@
         }
         body.push(m);
       }
+      // Recovery habits: walks most days, a weekend sauna with a cold plunge, a mid-week sauna lately.
+      if (rnd() < 0.5) rest('walk', day + 17 * 3600000, 20 + Math.floor(rnd() * 9) * 5);
+      if ((wd === 0 || (wd === 3 && off < 90)) && rnd() < 0.8) {
+        rest('sauna', day + 18 * 3600000, 15 + Math.floor(rnd() * 3) * 5);
+        if (rnd() < 0.5) rest('cold', day + 18.5 * 3600000, 2 + Math.floor(rnd() * 3));
+      }
       if (skipped[Math.floor((total - off) / 7)]) continue;
-      var wd = new Date(day).getDay();
       var planned = wd === 1 || wd === 3 || wd === 5;
       var bonus = wd === 6 && rnd() < 0.35;
       if (!planned && !bonus) continue;
@@ -632,6 +782,7 @@
       session++;
       var time = day + (7 + Math.floor(rnd() * 13)) * 3600000 + Math.floor(rnd() * 60) * 60000;
       if (time > Date.now()) time = Date.now() - 60000;
+      if (rnd() < 0.3) rest('stretch', time + 75 * 60000, 10 + Math.floor(rnd() * 2) * 5);
       plan.forEach(function (idx) {
         var l = lifts[idx];
         var weight, reps;
@@ -648,21 +799,25 @@
     }
     return {
       exercises: lifts.map(function (l) {
-        return { id: l.id, name: l.name, group: l.group, type: l.type || 'weight', createdAt: l.createdAt };
+        return { id: l.id, name: tr('ex_' + l.key), group: l.group, type: l.type || 'weight', createdAt: l.createdAt };
       }),
       entries: entries,
       goal: state.goal,
       groups: state.groups.slice(),
       profile: { sex: 'm', height: 181 },
-      body: body
+      body: body,
+      recovery: recovery,
+      recoveryTypes: state.recoveryTypes.slice()
     };
   }
 
   // ---------------------------------------------------------------------------
-  // Backup code / file
+  // Backup code / file / CSV
   // ---------------------------------------------------------------------------
 
   function opt(v) { return v === undefined ? null : v; }
+
+  function pairs(list) { return list.map(function (g) { return [g.id, g.label]; }); }
 
   function compactData() {
     var idx = {};
@@ -671,7 +826,7 @@
       app: 'kinetic',
       v: 2,
       g: state.goal,
-      c: state.groups.map(function (g) { return [g.id, g.label]; }),
+      c: pairs(state.groups),
       p: [state.profile.sex, state.profile.height],
       x: state.exercises.map(function (e) {
         return [e.name, e.group, Math.round((e.createdAt || Date.now()) / 60000), e.type === 'bodyweight' ? 1 : 0];
@@ -681,7 +836,9 @@
         .map(function (e) { return [idx[e.exerciseId], Math.round(e.date / 60000), e.weight, e.reps, e.sets]; }),
       b: state.body.map(function (b) {
         return [Math.round(b.date / 60000)].concat(BODY_FIELDS.map(function (f) { return opt(b[f]); }));
-      })
+      }),
+      q: pairs(state.recoveryTypes),
+      r: state.recovery.map(function (r) { return [r.type, Math.round(r.date / 60000), r.minutes]; })
     };
   }
 
@@ -690,17 +847,23 @@
 
   function encodeBackup() { return BACKUP_PREFIX + b64encode(JSON.stringify(compactData())); }
 
+  function readPairs(list) {
+    return (Array.isArray(list) ? list : [])
+      .filter(function (r) { return Array.isArray(r) && typeof r[0] === 'string' && typeof r[1] === 'string'; })
+      .map(function (r) { return { id: r[0], label: r[1].slice(0, 24) }; });
+  }
+
+  /** Accepts format v1 and v2; recovery fields (q, r) are optional so older codes still restore. */
   function decodeBackup(text) {
     text = String(text || '').trim();
     var data = text.indexOf(BACKUP_PREFIX) === 0
       ? JSON.parse(b64decode(text.slice(BACKUP_PREFIX.length).replace(/\s+/g, '')))
       : JSON.parse(text);
     if (!data || (data.v !== 1 && data.v !== 2) || !Array.isArray(data.x) || !Array.isArray(data.e)) throw new Error('Unsupported backup');
-    var groups = (Array.isArray(data.c) ? data.c : [])
-      .filter(function (r) { return Array.isArray(r) && typeof r[0] === 'string' && typeof r[1] === 'string'; })
-      .map(function (r) { return { id: r[0], label: r[1].slice(0, 24) }; });
+    var groups = readPairs(data.c);
     var known = {};
-    BUILTIN_GROUPS.concat(groups).forEach(function (g) { known[g.id] = true; });
+    BUILTIN_GROUPS.forEach(function (id) { known[id] = true; });
+    groups.forEach(function (g) { known[g.id] = true; });
     var exercises = data.x.map(function (r, i) {
       return {
         id: uid() + 'x' + i,
@@ -720,8 +883,15 @@
       BODY_FIELDS.forEach(function (f, j) { if (isNum(r[j + 1])) b[f] = r[j + 1]; });
       return b;
     }).filter(function (b) { return b && hasMeasurement(b); });
+    var recovery = (Array.isArray(data.r) ? data.r : []).map(function (r, i) {
+      if (!Array.isArray(r) || typeof r[0] !== 'string' || !isNum(r[1])) return null;
+      return { id: uid() + 'r' + i, type: r[0].slice(0, 40), date: r[1] * 60000, minutes: Number(r[2]) };
+    }).filter(validRecovery);
     var p = Array.isArray(data.p) ? data.p : [];
-    return normalize({ goal: data.g, groups: groups, exercises: exercises, entries: entries, profile: { sex: p[0], height: p[1] }, body: body });
+    return normalize({
+      goal: data.g, groups: groups, exercises: exercises, entries: entries, profile: { sex: p[0], height: p[1] }, body: body,
+      recovery: recovery, recoveryTypes: readPairs(data.q)
+    });
   }
 
   function copyText(text) {
@@ -750,22 +920,20 @@
     return ok;
   }
 
-  function exportFile() {
-    var json = JSON.stringify(compactData());
-    var name = 'kinetic-kopia-' + isoDay(Date.now()) + '.json';
-    if (bridge) {
-      // Android share sheet: save to Drive, send to yourself, keep in notes…
-      bridge.share('Kopia Kinetic ' + isoDay(Date.now()), json);
-      return;
+  /** Hands a file to the Android share sheet, the Web Share API or a download link. */
+  function saveFile(name, mime, text) {
+    if (bridge && bridge.shareFile) {
+      try { bridge.shareFile(name, mime, text); return; } catch (err) { /* fall through */ }
     }
+    if (bridge) { bridge.share(name, text); return; }
     try {
-      var file = new File([json], name, { type: 'application/json' });
+      var file = new File([text], name, { type: mime });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: 'Kopia Kinetic' }).catch(function () {});
+        navigator.share({ files: [file], title: name }).catch(function () {});
         return;
       }
     } catch (err) { /* fall back to a download link */ }
-    var url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    var url = URL.createObjectURL(new Blob([text], { type: mime }));
     var a = document.createElement('a');
     a.href = url;
     a.download = name;
@@ -773,18 +941,58 @@
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-    toast('Zapisano plik kopii');
+    toast(tr('fileSaved'));
+  }
+
+  function exportFile() {
+    saveFile(tr('backupFile', isoDay(Date.now())), 'application/json', JSON.stringify(compactData()));
+  }
+
+  /** Spreadsheet export (Kinetic Pro). Polish uses ";" and decimal commas, as Excel expects there. */
+  function exportCsv(kind) {
+    var sep = lang === 'pl' ? ';' : ',';
+    function num(v) {
+      if (!isNum(v)) return '';
+      var s = String(Math.round(v * 100) / 100);
+      return lang === 'pl' ? s.replace('.', ',') : s;
+    }
+    function cell(v) {
+      var s = v === null || v === undefined ? '' : String(v);
+      return /[";,\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+    var rows = [tr('csvHead_' + kind)];
+    var byDate = function (a, b) { return a.date - b.date; };
+    if (kind === 'training') {
+      state.entries.slice().sort(byDate).forEach(function (e) {
+        var ex = findExercise(e.exerciseId);
+        if (!ex) return;
+        var bw = ex.type === 'bodyweight';
+        rows.push([isoMinute(e.date), ex.name, groupLabel(ex.group), tr(bw ? 'typeBodyweight' : 'typeWeight'),
+          num(e.weight), e.reps, e.sets, bw ? '' : num(oneRM(e.weight, e.reps)), num(volumeOf(e))]);
+      });
+    } else if (kind === 'body') {
+      state.body.slice().sort(byDate).forEach(function (b) {
+        rows.push([isoDay(b.date)].concat(BODY_FIELDS.map(function (f) { return num(b[f]); })));
+      });
+    } else {
+      state.recovery.slice().sort(byDate).forEach(function (r) {
+        rows.push([isoMinute(r.date), recoveryType(r.type).label, r.minutes]);
+      });
+    }
+    if (rows.length < 2) { toast(tr('nothingToExport')); return; }
+    var csv = '\uFEFF' + rows.map(function (r) { return r.map(cell).join(sep); }).join('\r\n') + '\r\n';
+    saveFile(tr('csvFile_' + kind, isoDay(Date.now())), 'text/csv', csv);
   }
 
   function restoreFrom(text) {
     var data;
-    try { data = decodeBackup(text); } catch (err) { toast('To nie jest prawidłowy kod kopii'); return; }
-    var hasData = state.exercises.length > 0 || state.body.length > 0;
-    if (hasData && !window.confirm('Zastąpić obecne dane danymi z kopii?')) return;
+    try { data = decodeBackup(text); } catch (err) { toast(tr('invalidBackup')); return; }
+    var hasData = state.exercises.length > 0 || state.body.length > 0 || state.recovery.length > 0;
+    if (hasData && !window.confirm(tr('confirmReplaceBackup'))) return;
     state = data;
     commit();
     closeSheet();
-    toast('Przywrócono ' + data.entries.length + ' ' + plural(data.entries.length, 'wpis', 'wpisy', 'wpisów'));
+    toast(tr('restored', tn(data.entries.length, 'entries')));
     goHome();
   }
 
@@ -935,8 +1143,8 @@
     var d = monotonePath(pts);
     var lastX = pts[pts.length - 1].x.toFixed(1), firstX = pts[0].x.toFixed(1);
     return '<svg class="spark" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' +
-      '<path d="' + d + 'L' + lastX + ',' + H + 'L' + firstX + ',' + H + 'Z" fill="rgba(57,211,83,0.14)"/>' +
-      '<path d="' + d + '" fill="none" stroke="#39D353" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      '<path d="' + d + 'L' + lastX + ',' + H + 'L' + firstX + ',' + H + 'Z" style="fill:rgba(var(--acc),0.14)"/>' +
+      '<path d="' + d + '" fill="none" style="stroke:var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
   var chartGeom = null;
@@ -952,7 +1160,7 @@
     chartSel = -1;
     if (!pts.length) {
       chartGeom = null;
-      el.innerHTML = '<div class="chart-empty">' + icon('chart', 28, 1.6) + '<span>' + (opts.empty || 'Brak danych w tym zakresie') + '</span></div>';
+      el.innerHTML = '<div class="chart-empty">' + icon('chart', 28, 1.6) + '<span>' + (opts.empty || tr('chartEmpty')) + '</span></div>';
       return;
     }
     var W = Math.max(el.clientWidth, 200), H = 220, L = 4, R = 44, T = 12, B = 26;
@@ -986,8 +1194,8 @@
     });
 
     var defs = '<defs>' +
-      '<linearGradient id="ch-line" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0"><stop offset="0" stop-color="#2EE6A6"/><stop offset="1" stop-color="#39D353"/></linearGradient>' +
-      '<linearGradient id="ch-area" gradientUnits="userSpaceOnUse" x1="0" y1="' + T + '" x2="0" y2="' + base + '"><stop offset="0" stop-color="#39D353" stop-opacity="0.32"/><stop offset="1" stop-color="#39D353" stop-opacity="0"/></linearGradient>' +
+      '<linearGradient id="ch-line" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0"><stop offset="0" style="stop-color:var(--mint)"/><stop offset="1" style="stop-color:var(--accent)"/></linearGradient>' +
+      '<linearGradient id="ch-area" gradientUnits="userSpaceOnUse" x1="0" y1="' + T + '" x2="0" y2="' + base + '"><stop offset="0" style="stop-color:var(--accent);stop-opacity:0.32"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient>' +
       '<filter id="ch-glow" filterUnits="userSpaceOnUse" x="0" y="0" width="' + W + '" height="' + H + '"><feGaussianBlur stdDeviation="5"/></filter>' +
       '</defs>';
 
@@ -1105,18 +1313,212 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Recovery
+  // ---------------------------------------------------------------------------
+
+  function recoveryTypesAll() {
+    return RECOVERY_TYPES.map(function (r) { return { id: r.id, icon: r.icon, minutes: r.minutes, label: tr('rt_' + r.id) }; })
+      .concat(state.recoveryTypes.map(function (r) { return { id: r.id, icon: 'heart', minutes: CUSTOM_RECOVERY_MINUTES, label: r.label }; }));
+  }
+
+  function recoveryType(id) {
+    var all = recoveryTypesAll();
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
+    return { id: id, icon: 'heart', minutes: CUSTOM_RECOVERY_MINUTES, label: tr('rt_other') };
+  }
+
+  function recoveryBetween(from, to) {
+    return state.recovery.filter(function (r) { return r.date >= from && r.date < to; });
+  }
+
+  function minutesOf(list) { return list.reduce(function (s, r) { return s + r.minutes; }, 0); }
+
+  /** Minutes per day, keyed by local midnight. */
+  function dailyRecovery() {
+    var map = {};
+    state.recovery.forEach(function (r) { var k = startOfDay(r.date); map[k] = (map[k] || 0) + r.minutes; });
+    return map;
+  }
+
+  /** [{type, minutes, count}] sorted by time spent. */
+  function recoveryByType(list) {
+    var map = {};
+    list.forEach(function (r) {
+      var g = map[r.type] || (map[r.type] = { type: recoveryType(r.type), minutes: 0, count: 0 });
+      g.minutes += r.minutes;
+      g.count++;
+    });
+    return Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) { return b.minutes - a.minutes; });
+  }
+
+  /** Minutes of the most recent session of this type, or its default duration. */
+  function lastMinutes(type) {
+    var last = null;
+    state.recovery.forEach(function (r) { if (r.type === type && (!last || r.date > last.date)) last = r; });
+    return last ? last.minutes : recoveryType(type).minutes;
+  }
+
+  function recoveryWeeks(count) {
+    var start = addDays(weekStart(Date.now()), -(count - 1) * 7), pts = [];
+    for (var i = 0; i < count; i++) {
+      var s = addDays(start, i * 7);
+      pts.push({ date: s, value: minutesOf(recoveryBetween(s, addDays(s, 7))) });
+    }
+    return pts;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Kinetic Pro
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Kinetic Pro is a one-time Google Play purchase. Only a copy installed from Google Play sells it
+   * (the native side reports billingSupported); the web app and sideloaded APKs have every feature unlocked.
+   * On localhost, ?pro=gate simulates the store build with a mock purchase.
+   */
+  var pro = { gated: false, mock: false, owned: false, ready: false, busy: false, price: null };
+  var PRO_FEATURES = [['palette', 'Themes'], ['gauge', 'Analysis'], ['layers', 'Volume'], ['file', 'Csv']];
+
+  function initPro() {
+    var store = false;
+    try { store = !!(bridge && bridge.billingSupported && bridge.billingSupported()); } catch (err) { store = false; }
+    pro.mock = !store && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]pro=gate/.test(location.search);
+    pro.gated = store || pro.mock;
+    if (!pro.gated) return;
+    try { pro.owned = localStorage.getItem(PRO_KEY) === '1'; } catch (err) { pro.owned = false; }
+    if (pro.mock) { pro.ready = true; pro.price = '19,99 zł'; }
+    else bridge.proRefresh();
+  }
+
+  function hasPro() { return !pro.gated || pro.owned; }
+
+  function setOwned(owned) {
+    var changed = owned !== pro.owned;
+    pro.owned = owned;
+    try { if (owned) localStorage.setItem(PRO_KEY, '1'); else localStorage.removeItem(PRO_KEY); } catch (err) { /* ignore */ }
+    if (changed) { applyTheme(); refresh(); }
+  }
+
+  /** Called by the Android app with the store state: {ready, price, owned?, event?}. */
+  window.kineticProUpdate = function (s) {
+    s = s || {};
+    pro.ready = !!s.ready;
+    if (s.price) pro.price = String(s.price);
+    pro.busy = false;
+    if (typeof s.owned === 'boolean') setOwned(s.owned);
+    if (s.event === 'purchased') { closeSheet(); celebratePro(); }
+    else if (s.event === 'restored') toast(tr(pro.owned ? 'proRestored' : 'proNotFound'));
+    else if (s.event === 'pending') toast(tr('proPending'));
+    else if (s.event === 'error') toast(tr('proError'));
+    updatePaywall();
+  };
+
+  function buyPro() {
+    if (pro.owned || pro.busy) return;
+    if (pro.mock) {
+      if (!window.confirm(tr('proMockConfirm'))) return;
+      setOwned(true);
+      closeSheet();
+      celebratePro();
+      return;
+    }
+    if (!pro.ready) { toast(tr('proUnavailable')); bridge.proRefresh(); return; }
+    pro.busy = true;
+    updatePaywall();
+    bridge.proBuy();
+  }
+
+  function restorePro() {
+    if (pro.mock) { toast(tr(pro.owned ? 'proRestored' : 'proNotFound')); return; }
+    bridge.proRestore();
+  }
+
+  function celebratePro() { celebrate('Pro', '', tr('proThanks'), 'crown', tr('proUnlocked')); }
+
+  function proBadge() { return pro.gated && !pro.owned ? '<span class="pro-badge">' + icon('lock', 10, 2.8) + 'PRO</span>' : ''; }
+
+  /** Teaser shown in place of a Pro feature in the free store version. */
+  function proLock(key) {
+    return '<button class="card pro-lock" data-action="paywall"><span class="pro-badge">' + icon('lock', 10, 2.8) + 'PRO</span>' +
+      '<b>' + tr('proFeat' + key) + '</b><span>' + tr('proFeat' + key + 'Sub') + '</span></button>';
+  }
+
+  function openPaywall() {
+    openSheet('<div class="pay"><div class="pay-crown">' + icon('crown', 30, 1.8) + '</div>' +
+      '<div class="eyebrow accent">Kinetic Pro</div><h2>' + tr('proTitle') + '</h2>' +
+      '<div class="pay-list">' + PRO_FEATURES.map(function (f) {
+        return '<div class="pay-row"><span class="tile-ic">' + icon(f[0], 15, 2.1) + '</span><div><b>' + tr('proFeat' + f[1]) + '</b><span>' +
+          tr('proFeat' + f[1] + 'Sub') + '</span></div></div>';
+      }).join('') + '</div>' +
+      '<div id="pay-actions"></div><p class="fine">' + tr('proFine') + '</p></div>');
+    updatePaywall();
+  }
+
+  function updatePaywall() {
+    var el = $('#pay-actions');
+    if (!el) return;
+    if (hasPro()) {
+      el.innerHTML = '<div class="pay-owned">' + icon('check', 16, 2.8) + tr('proActive') + '</div>';
+      return;
+    }
+    el.innerHTML = '<button class="btn-primary" data-action="buy-pro"' + (pro.busy ? ' disabled' : '') + '>' + icon('crown', 16, 2.2) +
+      '<span>' + (pro.price ? tr('proBuyPrice', esc(pro.price)) : tr('proBuy')) + '</span></button>' +
+      '<button class="more-btn" data-action="restore-pro">' + tr('proRestore') + '</button>';
+  }
+
+  function proSettingsBlock() {
+    if (pro.gated && !pro.owned) {
+      return '<button class="card pro-cta" data-action="paywall"><span class="pay-crown sm">' + icon('crown', 18, 2) + '</span>' +
+        '<span class="pro-cta-t"><b>' + tr('proCtaTitle') + '</b><span>' + tr('proCtaSub') + '</span></span>' + icon('chevron', 16, 2.4) + '</button>';
+    }
+    return '<button class="card pro-cta owned" data-action="paywall"><span class="pay-crown sm">' + icon('crown', 18, 2) + '</span>' +
+      '<span class="pro-cta-t"><b>Kinetic Pro</b><span>' + tr(pro.gated ? 'proOwnedSub' : 'proIncludedSub') + '</span></span>' +
+      icon('check', 16, 2.8) + '</button>';
+  }
+
+  /** Working sets per muscle group in the last 7 days, for groups trained in the last 4 weeks. */
+  function groupSets() {
+    var now = Date.now(), weekAgo = now - 7 * DAY, monthAgo = now - 28 * DAY, map = {};
+    state.entries.forEach(function (e) {
+      if (e.date < monthAgo) return;
+      var ex = findExercise(e.exerciseId);
+      if (!ex) return;
+      var g = map[ex.group] || (map[ex.group] = { id: ex.group, week: 0, month: 0 });
+      g.month += e.sets;
+      if (e.date >= weekAgo) g.week += e.sets;
+    });
+    return Object.keys(map).map(function (k) { return map[k]; })
+      .sort(function (a, b) { return b.week - a.week || b.month - a.month; });
+  }
+
+  /** Least-squares slope of the metric over the last 90 days, per 30 days. */
+  function progressRate(id, metric) {
+    var pts = series(id, metric, Date.now() - 90 * DAY);
+    if (pts.length < 3 || pts[pts.length - 1].date - pts[0].date < 14 * DAY) return null;
+    var n = pts.length, mx = 0, my = 0, num = 0, den = 0;
+    pts.forEach(function (p) { mx += p.date / DAY; my += p.value; });
+    mx /= n;
+    my /= n;
+    pts.forEach(function (p) { var dx = p.date / DAY - mx; num += dx * (p.value - my); den += dx * dx; });
+    return den ? num / den * 30 : null;
+  }
+
+  var REP_TABLE = [1, 2, 3, 5, 8, 10, 12];
+
+  // ---------------------------------------------------------------------------
   // Home
   // ---------------------------------------------------------------------------
 
   function renderHome(enter) {
     detailCtx = null;
     bodyCtx = null;
+    recCtx = null;
     chartGeom = null;
     var h = '<div class="view' + (enter ? ' enter' : '') + '">' + homeHeader();
     if (showTip()) h += tipCard();
-    if (!state.exercises.length) h += emptyCard() + bodyCard();
-    else h += heroCard() + statsRow() + bodyCard() + heatCard() + exerciseList();
-    h += '<p class="foot fx" style="--d:.3s">Dane zapisane na tym urządzeniu · Ustawienia → Kopia zapasowa</p></div>';
+    if (!state.exercises.length) h += emptyCard() + bodyCard() + recoveryCard();
+    else h += heroCard() + statsRow() + bodyCard() + recoveryCard() + heatCard() + volumeCard() + exerciseList();
+    h += '<p class="foot fx" style="--d:.3s">' + tr('footNote') + '</p></div>';
     app.innerHTML = h;
     if (enter) animateCounts(app);
     animateRings(app, enter);
@@ -1127,14 +1529,13 @@
   function homeHeader() {
     return '<header class="top fx" style="--d:0s"><div><div class="eyebrow">' + esc(dfLong.format(new Date())) + '</div>' +
       '<h1 class="title">Kinetic</h1></div>' +
-      '<button class="icon-btn" data-action="settings" aria-label="Ustawienia">' + icon('more', 22, 3.2) + '</button></header>';
+      '<button class="icon-btn" data-action="settings" aria-label="' + tr('settings') + '">' + icon('more', 22, 3.2) + '</button></header>';
   }
 
   function tipCard() {
     return '<section class="card tip fx" style="--d:.03s"><span class="tip-ic">' + icon('share', 20, 2) + '</span>' +
-      '<p><b>Dodaj Kinetic do ekranu początkowego.</b> Stuknij <b>Udostępnij</b>, potem <b>Do ekranu początkowego</b>. ' +
-      'Otworzy się jak aplikacja, zadziała bez internetu, a postępy zostaną zapisane w telefonie.</p>' +
-      '<button class="tip-x" data-action="tip-close" aria-label="Zamknij">' + icon('close', 16, 2.2) + '</button></section>';
+      '<p>' + tr('tipHtml') + '</p>' +
+      '<button class="tip-x" data-action="tip-close" aria-label="' + tr('close') + '">' + icon('close', 16, 2.2) + '</button></section>';
   }
 
   function emptyCard() {
@@ -1142,19 +1543,19 @@
     var cells = '';
     for (var i = 0; i < pattern.length; i++) cells += '<i class="c l' + pattern.charAt(i) + '" style="--w:' + (i % 14) + '"></i>';
     return '<section class="card empty fx" style="--d:.08s"><div class="mini-grid">' + cells + '</div>' +
-      '<h2>Zacznij śledzić swój progres</h2>' +
-      '<p class="note">Dodaj ćwiczenia, zapisuj ciężar, powtórzenia i serie. Kinetic pokaże, jak rośnie Twoja siła — dzień po dniu.</p>' +
+      '<h2>' + tr('emptyTitle') + '</h2>' +
+      '<p class="note">' + tr('emptyText') + '</p>' +
       '<div class="stack">' +
-      '<button class="btn-primary" data-action="add-exercise">' + icon('plus', 16, 2.6) + 'Dodaj pierwsze ćwiczenie</button>' +
-      '<button class="btn-ghost" data-action="demo">' + icon('spark', 16, 2) + 'Wypróbuj z danymi demo</button>' +
-      '<button class="btn-ghost" data-action="settings-restore">' + icon('restore', 16, 2) + 'Mam kod kopii</button>' +
+      '<button class="btn-primary" data-action="add-exercise">' + icon('plus', 16, 2.6) + tr('addFirstExercise') + '</button>' +
+      '<button class="btn-ghost" data-action="demo">' + icon('spark', 16, 2) + tr('tryDemo') + '</button>' +
+      '<button class="btn-ghost" data-action="settings-restore">' + icon('restore', 16, 2) + tr('haveBackupCode') + '</button>' +
       '</div></section>';
   }
 
   function ring(p, label, sub) {
     var r = 41.5, c = 2 * Math.PI * r;
     return '<div class="ring-wrap"><svg class="ring" viewBox="0 0 92 92" width="92" height="92" aria-hidden="true">' +
-      '<defs><linearGradient id="ring-g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="92" y2="92"><stop offset="0" stop-color="#2EE6A6"/><stop offset="1" stop-color="#39D353"/></linearGradient></defs>' +
+      '<defs><linearGradient id="ring-g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="92" y2="92"><stop offset="0" style="stop-color:var(--mint)"/><stop offset="1" style="stop-color:var(--accent)"/></linearGradient></defs>' +
       '<circle class="ring-track" cx="46" cy="46" r="' + r + '"/>' +
       '<circle class="ring-bar" cx="46" cy="46" r="' + r + '" stroke="url(#ring-g)" transform="rotate(-90 46 46)" stroke-dasharray="' + c.toFixed(2) +
       '" stroke-dashoffset="' + c.toFixed(2) + '" data-offset="' + (c * (1 - p)).toFixed(2) + '"' + (p <= 0 ? ' style="opacity:0"' : '') + '/>' +
@@ -1166,52 +1567,86 @@
     var change = lastWeek > 0 ? (thisWeek - lastWeek) / lastWeek : null;
     var days = trainingDays(0);
     return '<section class="card hero fx" style="--d:.05s"><div class="hero-main">' +
-      '<div class="eyebrow">Wolumen · ten tydzień</div>' +
+      '<div class="eyebrow">' + tr('volumeThisWeek') + '</div>' +
       '<div class="big"><span class="num" data-count="' + thisWeek + '" data-fmt="int">' + fmtInt(thisWeek) + '</span><span class="unit">kg</span></div>' +
-      '<div class="delta-row">' + deltaChip(change) + '<span class="muted">vs poprzedni</span></div></div>' +
-      ring(Math.min(days / state.goal, 1), days + '/' + state.goal, 'dni') + '</section>';
+      '<div class="delta-row">' + deltaChip(change) + '<span class="muted">' + tr('vsLastWeek') + '</span></div></div>' +
+      ring(Math.min(days / state.goal, 1), days + '/' + state.goal, tr('daysShort')) + '</section>';
   }
 
   function statsRow() {
     return '<section class="stats fx" style="--d:.1s">' +
-      tile('flame', String(weekStreak()), 'tyg.', 'Seria') +
-      tile('calendar', String(uniqueDays(state.entries)), '', 'Treningi') +
-      tile('trophy', String(recentPRCount()), '', 'PR · 30 dni') +
+      tile('flame', String(weekStreak()), tr('weeksShort'), tr('streak')) +
+      tile('calendar', String(uniqueDays(state.entries)), '', tr('workouts')) +
+      tile('trophy', String(recentPRCount()), '', tr('prs30')) +
       '</section>';
   }
 
   function bodyCard() {
     var idx = indices();
+    var head = '<div class="row-between"><span class="eyebrow">' + tr('physique') + '</span><span class="chev">' + icon('chevron', 16, 2.4) + '</span></div>';
     if (!idx.weight && !state.profile.height) {
-      return '<a class="card body-card fx" style="--d:.12s" href="#/body">' +
-        '<div class="row-between"><span class="eyebrow">Sylwetka</span><span class="chev">' + icon('chevron', 16, 2.4) + '</span></div>' +
-        '<p class="note tight">Dodaj wagę, wzrost i obwody. Kinetic policzy tkankę tłuszczową, FFMI, proporcje sylwetki i siłę względną.</p>' +
-        '<span class="chip-btn">' + icon('plus', 13, 2.8) + 'Uzupełnij profil</span></a>';
+      return '<a class="card body-card fx" style="--d:.12s" href="#/body">' + head +
+        '<p class="note tight">' + tr('bodyCardEmpty') + '</p>' +
+        '<span class="chip-btn">' + icon('plus', 13, 2.8) + tr('completeProfile') + '</span></a>';
     }
     function cell(value, unit, label) {
       return '<div><b>' + (value === null ? '—' : value + (unit ? '<small>' + unit + '</small>' : '')) + '</b><span>' + label + '</span></div>';
     }
-    return '<a class="card body-card fx" style="--d:.12s" href="#/body">' +
-      '<div class="row-between"><span class="eyebrow">Sylwetka</span><span class="chev">' + icon('chevron', 16, 2.4) + '</span></div>' +
+    return '<a class="card body-card fx" style="--d:.12s" href="#/body">' + head +
       '<div class="trio">' +
-      cell(idx.weight ? fmtW(idx.weight) : null, 'kg', 'Waga') +
-      cell(idx.bodyFat !== null ? fmtW(idx.bodyFat) : null, '%', 'Tłuszcz') +
+      cell(idx.weight ? fmtW(idx.weight) : null, 'kg', tr('b_weight')) +
+      cell(idx.bodyFat !== null ? fmtW(idx.bodyFat) : null, '%', tr('fat')) +
       cell(idx.ffmiNorm ? fmtW(idx.ffmiNorm) : null, '', 'FFMI') +
       '</div></a>';
   }
 
+  function recoveryCard() {
+    var head = '<div class="sec-head"><span class="eyebrow">' + tr('recovery') + '</span>' +
+      '<button class="chip-btn" data-action="add-recovery">' + icon('plus', 13, 2.8) + tr('add') + '</button></div>';
+    if (!state.recovery.length) {
+      return '<section class="fx" style="--d:.13s">' + head + '<button class="card rec-card rec-empty" data-action="add-recovery">' +
+        '<span class="rec-icons">' + ['flame', 'walk', 'wave', 'snow', 'leaf'].map(function (n) { return '<i>' + icon(n, 16, 2) + '</i>'; }).join('') + '</span>' +
+        '<span class="note">' + tr('recEmpty') + '</span></button></section>';
+    }
+    var now = Date.now(), today = startOfDay(now);
+    var week = recoveryBetween(addDays(today, -6), now + 1);
+    var daily = dailyRecovery();
+    var days = [], max = 30;
+    for (var i = 6; i >= 0; i--) {
+      var t = addDays(today, -i), m = daily[t] || 0;
+      if (m > max) max = m;
+      days.push({ t: t, m: m });
+    }
+    var strip = days.map(function (d) {
+      var hgt = d.m ? Math.max(12, Math.round(d.m / max * 100)) : 0;
+      return '<div class="rd' + (d.t === today ? ' today' : '') + '"><div class="rd-bar"><i style="height:' + hgt + '%"></i></div>' +
+        '<span>' + esc(dfWeekday.format(new Date(d.t))) + '</span></div>';
+    }).join('');
+    var types = recoveryByType(week).slice(0, 3).map(function (g) {
+      return '<span class="rchip">' + icon(g.type.icon, 12, 2.2) + esc(g.type.label) + '<b>' + fmtDur(g.minutes) + '</b></span>';
+    }).join('');
+    var total = bigDur(minutesOf(week));
+    return '<section class="fx" style="--d:.13s">' + head + '<a class="card rec-card" href="#/recovery">' +
+      '<div class="row-between"><div><div class="big sm"><span class="num">' + total.num + '</span><span class="unit">' + total.unit + '</span></div>' +
+      '<div class="muted">' + tr('last7Days') + ' · ' + tn(week.length, 'sessions') + '</div></div>' +
+      '<div class="rec-week">' + strip + '</div></div>' +
+      (types ? '<div class="rec-types">' + types + '</div>' : '') +
+      '</a></section>';
+  }
+
   function heatCard() {
     var activity = dailyActivity();
+    var rest = dailyRecovery();
     var today = startOfDay(Date.now());
     var firstWeek = addDays(weekStart(today), -(HEAT_WEEKS - 1) * 7);
-    var cols = [], max = 0, active = 0, w, d;
+    var cols = [], max = 0, active = 0, anyRest = false, w, d;
 
     for (w = 0; w < HEAT_WEEKS; w++) {
       var col = [];
       for (d = 0; d < 7; d++) {
         var t = addDays(firstWeek, w * 7 + d), a = activity[t] || { sets: 0, volume: 0 };
-        if (t <= today) { if (a.sets > max) max = a.sets; if (a.sets > 0) active++; }
-        col.push({ t: t, sets: a.sets, volume: a.volume });
+        if (t <= today) { if (a.sets > max) max = a.sets; if (a.sets > 0) active++; if (rest[t]) anyRest = true; }
+        col.push({ t: t, sets: a.sets, volume: a.volume, rest: rest[t] || 0 });
       }
       cols.push(col);
     }
@@ -1228,26 +1663,45 @@
         var future = c.t > today;
         var level = 0;
         if (c.sets > 0 && max > 0) { var r = c.sets / max; level = r < 0.25 ? 1 : r < 0.5 ? 2 : r < 0.75 ? 3 : 4; }
-        return '<i class="c l' + level + (future ? ' future' : '') + (c.t === today ? ' today' : '') + '" style="--w:' + wi + '"' +
-          (future ? '' : ' data-action="day" data-t="' + c.t + '" data-s="' + c.sets + '" data-v="' + Math.round(c.volume) + '"') + '></i>';
+        return '<i class="c l' + level + (future ? ' future' : '') + (c.t === today ? ' today' : '') + (c.rest && !future ? ' rest' : '') + '" style="--w:' + wi + '"' +
+          (future ? '' : ' data-action="day" data-t="' + c.t + '" data-s="' + c.sets + '" data-v="' + Math.round(c.volume) + '" data-r="' + c.rest + '"') + '></i>';
       }).join('') + '</div>';
     }).join('');
 
+    var dayNames = tr('heatDays');
     return '<section class="card heat fx" style="--d:.15s">' +
-      '<div class="heat-head"><span class="eyebrow">Aktywność</span><span class="muted">' + active + ' ' +
-      plural(active, 'trening', 'treningi', 'treningów') + ' · 6 mies.</span></div>' +
-      '<div class="heat-body"><div class="heat-days"><span>Pn</span><span></span><span>Śr</span><span></span><span>Pt</span><span></span><span>Nd</span></div>' +
+      '<div class="heat-head"><span class="eyebrow">' + tr('activity') + '</span><span class="muted">' + tn(active, 'workoutsN') + ' · ' + tr('sixMonths') + '</span></div>' +
+      '<div class="heat-body"><div class="heat-days">' + dayNames.map(function (n) { return '<span>' + n + '</span>'; }).join('') + '</div>' +
       '<div class="heat-scroll"><div class="heat-inner"><div class="heat-months">' +
       labels.map(function (l) { return '<span>' + esc(l) + '</span>'; }).join('') + '</div>' +
       '<div class="heat-grid">' + grid + '</div></div></div></div>' +
-      '<div class="heat-foot"><span class="heat-info" id="heat-info">Dotknij dzień</span>' +
-      '<span class="legend">Mniej<i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i>Więcej</span></div>' +
+      '<div class="heat-foot"><span class="heat-info" id="heat-info">' + tr('tapDay') + '</span>' +
+      '<span class="legend">' + tr('less') + '<i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i>' + tr('more') + '</span></div>' +
+      (anyRest ? '<div class="heat-key"><i></i>' + tr('restDayKey') + '</div>' : '') +
       '</section>';
   }
 
+  function volumeCard() {
+    var rows = groupSets();
+    if (!rows.length) return '';
+    var head = '<div class="sec-head"><span class="eyebrow">' + tr('setsPerGroup') + '</span><span class="muted">' + tr('setsPerGroupSub') + '</span></div>';
+    if (!hasPro()) return '<section class="fx" style="--d:.18s">' + head + proLock('Volume') + '</section>';
+    var max = 24;
+    rows.forEach(function (r) { if (r.week > max) max = r.week; });
+    var body = rows.map(function (r) {
+      var cls = r.week < 10 ? 'low' : (r.week <= 20 ? 'ok' : 'high');
+      return '<div class="vol-row"><div class="vol-top"><span class="vol-name">' + esc(groupLabel(r.id)) + '</span>' +
+        '<span class="vol-n"><b>' + r.week + '</b><small>' + tr('avgPerWeek', fmtW(r.month / 4)) + '</small></span></div>' +
+        '<div class="vol-bar"><span class="band" style="left:' + (10 / max * 100).toFixed(1) + '%;width:' + (10 / max * 100).toFixed(1) + '%"></span>' +
+        '<i class="' + cls + '" style="width:' + Math.min(100, r.week / max * 100).toFixed(1) + '%"></i></div></div>';
+    }).join('');
+    return '<section class="fx" style="--d:.18s">' + head + '<div class="card vol">' + body +
+      '<div class="hint">' + tr('volHint') + '</div></div></section>';
+  }
+
   function exerciseList() {
-    var h = '<section class="fx" style="--d:.2s"><div class="sec-head"><span class="eyebrow">Ćwiczenia</span>' +
-      '<button class="chip-btn" data-action="add-exercise">' + icon('plus', 13, 2.8) + 'Dodaj</button></div>';
+    var h = '<section class="fx" style="--d:.2s"><div class="sec-head"><span class="eyebrow">' + tr('exercises') + '</span>' +
+      '<button class="chip-btn" data-action="add-exercise">' + icon('plus', 13, 2.8) + tr('add') + '</button></div>';
     sortedExercises().forEach(function (ex) {
       var bw = ex.type === 'bodyweight';
       var list = entriesFor(ex.id);
@@ -1258,9 +1712,9 @@
       h += '<a class="card ex-card" href="#/e/' + ex.id + '">' +
         '<span class="badge">' + esc(initials(ex.name)) + '</span>' +
         '<span class="ex-main"><span class="ex-name">' + esc(ex.name) + '</span>' +
-        '<span class="ex-sub">' + esc(groupLabel(ex.group)) + (bw ? ' · masa ciała' : '') + ' · ' + (last ? relative(last.date) : 'brak wpisów') + '</span></span>' +
+        '<span class="ex-sub">' + esc(groupLabel(ex.group)) + (bw ? ' · ' + tr('bodyweightLower') : '') + ' · ' + (last ? relative(last.date) : tr('noEntries')) + '</span></span>' +
         (trend.length > 1 ? sparkline(trend) : '') +
-        '<span class="ex-val"><span class="ex-w">' + (best !== null ? '<b>' + (bw ? fmtInt(best) : fmtW(best)) + '</b><small>' + (bw ? 'powt.' : 'kg') + '</small>' : '<b>—</b>') + '</span>' +
+        '<span class="ex-val"><span class="ex-w">' + (best !== null ? '<b>' + (bw ? fmtInt(best) : fmtW(best)) + '</b><small>' + (bw ? tr('u_reps') : 'kg') + '</small>' : '<b>—</b>') + '</span>' +
         deltaChip(change, true) + '</span></a>';
     });
     return h + '</section>';
@@ -1269,6 +1723,14 @@
   // ---------------------------------------------------------------------------
   // Exercise detail
   // ---------------------------------------------------------------------------
+
+  function metricItems(ex) {
+    return metricsFor(ex).map(function (m) { return { id: m.id, label: tr('m_' + m.id) }; });
+  }
+
+  function rangeItems() {
+    return RANGES.map(function (r) { return { id: r.id, label: tr('r_' + r.id) }; });
+  }
 
   function currentPoints(ex) {
     return series(ex.id, currentMetric(ex).id, rangeStart(ui.range));
@@ -1286,25 +1748,28 @@
     var ex = findExercise(id);
     if (!ex) { location.replace('#/'); return; }
     bodyCtx = null;
+    recCtx = null;
     var key = metricKey(ex);
     app.innerHTML = '<div class="view detail' + (enter ? ' enter' : '') + '">' +
-      '<nav class="nav fx" style="--d:0s"><button class="icon-btn" data-action="back" aria-label="Wstecz">' + icon('back', 20, 2.4) + '</button>' +
+      '<nav class="nav fx" style="--d:0s"><button class="icon-btn" data-action="back" aria-label="' + tr('back') + '">' + icon('back', 20, 2.4) + '</button>' +
       '<div class="nav-actions">' +
-      '<button class="icon-btn" data-action="edit-exercise" data-id="' + ex.id + '" aria-label="Edytuj ćwiczenie">' + icon('edit', 17, 2) + '</button>' +
-      '<button class="icon-btn" data-action="delete-exercise" data-id="' + ex.id + '" aria-label="Usuń ćwiczenie">' + icon('trash', 17, 2) + '</button>' +
+      '<button class="icon-btn" data-action="edit-exercise" data-id="' + ex.id + '" aria-label="' + tr('editExercise') + '">' + icon('edit', 17, 2) + '</button>' +
+      '<button class="icon-btn" data-action="delete-exercise" data-id="' + ex.id + '" aria-label="' + tr('deleteExercise') + '">' + icon('trash', 17, 2) + '</button>' +
       '</div></nav>' +
       '<section id="d-head" class="fx" style="--d:.03s"></section>' +
-      '<div class="fx" style="--d:.06s">' + pills(key, metricsFor(ex), currentMetric(ex).id) + '</div>' +
-      '<section class="card chart-card fx" style="--d:.1s"><div class="chart" id="d-chart"></div>' + pills('range', RANGES, ui.range) + '</section>' +
+      '<div class="fx" style="--d:.06s">' + pills(key, metricItems(ex), currentMetric(ex).id) + '</div>' +
+      '<section class="card chart-card fx" style="--d:.1s"><div class="chart" id="d-chart"></div>' + pills('range', rangeItems(), ui.range) + '</section>' +
       '<section id="d-stats" class="grid2 fx" style="--d:.15s"></section>' +
+      '<section id="d-pro" class="fx" style="--d:.18s"></section>' +
       '<section id="d-hist" class="fx" style="--d:.2s"></section>' +
       '</div>' +
-      '<div class="bottom-bar"><button class="btn-primary" data-action="log" data-id="' + ex.id + '">' + icon('plus', 16, 2.8) + 'Dodaj serię</button></div>';
+      '<div class="bottom-bar"><button class="btn-primary" data-action="log" data-id="' + ex.id + '">' + icon('plus', 16, 2.8) + tr('addSet') + '</button></div>';
     detailCtx = { ex: ex, pts: currentPoints(ex) };
     renderHead(null);
     placeThumbs();
     mountChart($('#d-chart'), detailCtx.pts, true, chartOptsFor(ex));
     renderStats(ex);
+    renderAnalysis(ex);
     renderHistory(ex);
   }
 
@@ -1317,13 +1782,13 @@
     if (selected) {
       sub = '<span>' + esc(dfLong.format(new Date(selected.date))) + '</span>';
     } else if (pts.length > 1 && pts[0].value > 0) {
-      sub = deltaChip((pts[pts.length - 1].value - pts[0].value) / pts[0].value) + '<span class="muted">' + byId(RANGES, ui.range).caption + '</span>';
+      sub = deltaChip((pts[pts.length - 1].value - pts[0].value) / pts[0].value) + '<span class="muted">' + tr('rc_' + ui.range) + '</span>';
     } else {
-      sub = '<span class="muted">' + (pts.length ? 'Dodaj kolejne serie, aby zobaczyć trend' : 'Brak wpisów w tym okresie') + '</span>';
+      sub = '<span class="muted">' + tr(pts.length ? 'addMoreForTrend' : 'noEntriesInRange') + '</span>';
     }
-    $('#d-head').innerHTML = '<div class="eyebrow accent">' + esc(groupLabel(ex.group)) + (ex.type === 'bodyweight' ? ' · masa ciała' : '') + '</div>' +
+    $('#d-head').innerHTML = '<div class="eyebrow accent">' + esc(groupLabel(ex.group)) + (ex.type === 'bodyweight' ? ' · ' + tr('bodyweightLower') : '') + '</div>' +
       '<h1 class="d-title">' + esc(ex.name) + '</h1>' +
-      '<div class="big xl"><span class="num">' + (shown ? fmt(shown.value) : '—') + '</span><span class="unit">' + metric.unit + '</span></div>' +
+      '<div class="big xl"><span class="num">' + (shown ? fmt(shown.value) : '—') + '</span><span class="unit">' + unitLabel(metric.unit) + '</span></div>' +
       '<div class="d-sub">' + sub + '</div>';
   }
 
@@ -1334,41 +1799,77 @@
       var reps = list.reduce(function (s, e) { return s + e.reps * e.sets; }, 0);
       var maxAdded = bestWeight(ex.id);
       $('#d-stats').innerHTML =
-        tile('trophy', bestReps(ex.id) !== null ? fmtInt(bestReps(ex.id)) : '—', 'powt.', 'Rekord w serii') +
-        tile('weight', maxAdded ? '+' + fmtW(maxAdded) : '—', maxAdded ? 'kg' : '', 'Najw. obciążenie') +
-        tile('calendar', String(uniqueDays(list)), '', 'Sesje') +
-        tile('reps', fmtInt(reps), '', 'Powtórzeń łącznie');
+        tile('trophy', bestReps(ex.id) !== null ? fmtInt(bestReps(ex.id)) : '—', tr('u_reps'), tr('bestSetReps')) +
+        tile('weight', maxAdded ? '+' + fmtW(maxAdded) : '—', maxAdded ? 'kg' : '', tr('heaviestLoad')) +
+        tile('calendar', String(uniqueDays(list)), '', tr('sessionsLabel')) +
+        tile('reps', fmtInt(reps), '', tr('totalReps'));
       return;
     }
     var b1 = bestOneRM(ex.id), bw = bestWeight(ex.id);
     $('#d-stats').innerHTML =
-      tile('trophy', b1 !== null ? fmtW(b1) : '—', 'kg', 'Rekord · szac. 1RM') +
-      tile('weight', bw !== null ? fmtW(bw) : '—', 'kg', 'Najcięższa seria') +
-      tile('calendar', String(uniqueDays(list)), '', 'Sesje') +
-      tile('bars', total >= 10000 ? fmtW(total / 1000) : fmtInt(total), total >= 10000 ? 't' : 'kg', 'Wolumen łącznie');
+      tile('trophy', b1 !== null ? fmtW(b1) : '—', 'kg', tr('record1RM')) +
+      tile('weight', bw !== null ? fmtW(bw) : '—', 'kg', tr('heaviestSet')) +
+      tile('calendar', String(uniqueDays(list)), '', tr('sessionsLabel')) +
+      tile('bars', total >= 10000 ? fmtW(total / 1000) : fmtInt(total), total >= 10000 ? 't' : 'kg', tr('totalVolume'));
+  }
+
+  /** Kinetic Pro: progress rate, load table and rep records. */
+  function renderAnalysis(ex) {
+    var el = $('#d-pro');
+    if (!el) return;
+    var list = entriesFor(ex.id);
+    if (!list.length) { el.innerHTML = ''; return; }
+    var head = '<div class="sec-head"><span class="eyebrow">' + tr('analysis') + '</span></div>';
+    if (!hasPro()) { el.innerHTML = head + proLock('Analysis'); return; }
+    var bw = ex.type === 'bodyweight';
+    var unit = bw ? tr('u_reps') : 'kg';
+    var rate = progressRate(ex.id, bw ? 'maxReps' : 'oneRM');
+    var rateHtml = rate === null
+      ? '<div class="ana-v muted-v">—</div><div class="hint">' + tr('rateNeedData') + '</div>'
+      : '<div class="ana-v' + (rate > 0.05 ? ' pos' : (rate < -0.05 ? ' neg' : '')) + '">' + (rate > 0.05 ? '+' : (rate < -0.05 ? '−' : '±')) +
+        fmtW(Math.abs(rate)) + '<small>' + tr('perMonth', unit) + '</small></div><div class="hint">' + tr('rateHint') + '</div>';
+    var h = head + '<div class="card ana"><div class="ana-rate"><div class="k">' + tr('progressRate') + '</div>' + rateHtml + '</div>';
+    if (bw) {
+      var bestDay = 0, reps = 0, sets = 0;
+      series(ex.id, 'totalReps', 0).forEach(function (p) { if (p.value > bestDay) bestDay = p.value; });
+      list.slice(-15).forEach(function (e) { reps += e.reps * e.sets; sets += e.sets; });
+      h += '<div class="trio ana-trio"><div><b>' + fmtInt(bestDay) + '</b><span>' + tr('bestSession') + '</span></div>' +
+        '<div><b>' + (sets ? fmtW(reps / sets) : '—') + '</b><span>' + tr('avgRepsPerSet') + '</span></div>' +
+        '<div><b>' + fmtInt(bestReps(ex.id) || 0) + '</b><span>' + tr('bestSetReps') + '</span></div></div>';
+    } else {
+      var best = bestOneRM(ex.id), actual = {};
+      list.forEach(function (e) { if (!actual[e.reps] || e.weight > actual[e.reps]) actual[e.reps] = e.weight; });
+      h += '<div class="k ana-k">' + tr('loadTable') + '</div><table class="ana-table"><thead><tr><th>' + tr('thReps') + '</th><th>' + tr('thTarget') +
+        '</th><th>% 1RM</th><th>' + tr('thBest') + '</th></tr></thead><tbody>' +
+        REP_TABLE.map(function (r) {
+          var pct = r <= 1 ? 1 : 1 / (1 + r / 30);
+          return '<tr><td>' + r + '</td><td><b>' + fmtW(Math.round(best * pct * 2) / 2) + '</b> kg</td><td>' + Math.round(pct * 100) + '%</td><td>' +
+            (actual[r] ? fmtW(actual[r]) + ' kg' : '—') + '</td></tr>';
+        }).join('') + '</tbody></table><div class="hint">' + tr('loadTableHint', fmtW(best)) + '</div>';
+    }
+    el.innerHTML = h + '</div>';
   }
 
   function renderHistory(ex) {
     var bw = ex.type === 'bodyweight';
     var list = entriesFor(ex.id).reverse();
     var prs = prIds(ex.id);
-    var h = '<div class="sec-head"><span class="eyebrow">Historia</span><span class="muted">' + list.length + ' ' +
-      plural(list.length, 'wpis', 'wpisy', 'wpisów') + '</span></div>';
+    var h = '<div class="sec-head"><span class="eyebrow">' + tr('history') + '</span><span class="muted">' + tn(list.length, 'entries') + '</span></div>';
     if (!list.length) {
-      h += '<div class="card note-card">Jeszcze nic tu nie ma. Dodaj pierwszą serię przyciskiem poniżej.</div>';
+      h += '<div class="card note-card">' + tr('historyEmpty') + '</div>';
     } else {
       h += '<div class="card hist">' + list.slice(0, ui.historyLimit).map(function (e) {
-        var sub = bw ? (e.weight > 0 ? '+' + fmtW(e.weight) + ' kg obciążenia' : 'masa ciała') : '1RM ' + fmtW(oneRM(e.weight, e.reps)) + ' kg';
+        var sub = bw ? (e.weight > 0 ? tr('extraLoad', fmtW(e.weight)) : tr('bodyweightLower')) : '1RM ' + fmtW(oneRM(e.weight, e.reps)) + ' kg';
         var val = bw
-          ? '<b>' + e.reps + '</b><small>powt.</small><span>× ' + e.sets + '</span>'
+          ? '<b>' + e.reps + '</b><small>' + tr('u_reps') + '</small><span>× ' + e.sets + '</span>'
           : '<b>' + fmtW(e.weight) + '</b><small>kg</small><span>× ' + e.reps + ' × ' + e.sets + '</span>';
         return '<div class="hrow"><div><div class="h-date">' + dfDayMonth.format(new Date(e.date)) + '</div>' +
           '<div class="h-sub">' + sub + '</div></div>' +
           (prs[e.id] ? '<span class="pr">' + icon('trophy', 10, 2.8) + 'PR</span>' : '') +
           '<div class="h-val">' + val + '</div>' +
-          '<button class="h-del" data-action="delete-entry" data-id="' + e.id + '" aria-label="Usuń wpis">' + icon('trash', 15, 2) + '</button></div>';
+          '<button class="h-del" data-action="delete-entry" data-id="' + e.id + '" aria-label="' + tr('deleteEntry') + '">' + icon('trash', 15, 2) + '</button></div>';
       }).join('') + '</div>';
-      if (list.length > ui.historyLimit) h += '<button class="more-btn" data-action="more">Pokaż więcej</button>';
+      if (list.length > ui.historyLimit) h += '<button class="more-btn" data-action="more">' + tr('showMore') + '</button>';
     }
     $('#d-hist').innerHTML = h;
   }
@@ -1385,30 +1886,31 @@
       .sort(function (a, b) { return a.date - b.date; });
   }
 
-  var bodyChartOpts = { fmt: fmtW, onSelect: renderBodyHead, empty: 'Dodaj pomiar wagi, aby zobaczyć wykres' };
+  function bodyChartOpts() { return { fmt: fmtW, onSelect: renderBodyHead, empty: tr('bodyChartEmpty') }; }
 
   function renderBody(enter) {
     detailCtx = null;
+    recCtx = null;
     var idx = indices();
     var p = state.profile;
     var missing = !p.sex || !p.height;
     app.innerHTML = '<div class="view detail' + (enter ? ' enter' : '') + '">' +
-      '<nav class="nav fx" style="--d:0s"><button class="icon-btn" data-action="back" aria-label="Wstecz">' + icon('back', 20, 2.4) + '</button>' +
-      '<button class="icon-btn" data-action="profile" aria-label="Profil">' + icon('user', 18, 2) + '</button></nav>' +
+      '<nav class="nav fx" style="--d:0s"><button class="icon-btn" data-action="back" aria-label="' + tr('back') + '">' + icon('back', 20, 2.4) + '</button>' +
+      '<button class="icon-btn" data-action="profile" aria-label="' + tr('profile') + '">' + icon('user', 18, 2) + '</button></nav>' +
       '<section id="b-head" class="fx" style="--d:.03s"></section>' +
-      (missing ? '<section class="card cta fx" style="--d:.05s"><p class="note tight"><b>Uzupełnij profil.</b> Płeć i wzrost są potrzebne do tkanki tłuszczowej, FFMI i DOTS.</p>' +
-        '<button class="chip-btn" data-action="profile">' + icon('user', 13, 2.4) + 'Profil</button></section>' : '') +
-      '<section class="card chart-card fx" style="--d:.08s"><div class="chart" id="b-chart"></div>' + pills('bodyRange', RANGES, ui.bodyRange) + '</section>' +
+      (missing ? '<section class="card cta fx" style="--d:.05s"><p class="note tight">' + tr('profileMissing') + '</p>' +
+        '<button class="chip-btn" data-action="profile">' + icon('user', 13, 2.4) + tr('profile') + '</button></section>' : '') +
+      '<section class="card chart-card fx" style="--d:.08s"><div class="chart" id="b-chart"></div>' + pills('bodyRange', rangeItems(), ui.bodyRange) + '</section>' +
       indicesSection(idx) +
       strengthSection(idx) +
       '<section id="b-log" class="fx" style="--d:.24s"></section>' +
-      '<p class="fine fx" style="--d:.28s">Wskaźniki są orientacyjne i nie zastępują porady lekarza ani pomiaru DEXA.</p>' +
+      '<p class="fine fx" style="--d:.28s">' + tr('indicesDisclaimer') + '</p>' +
       '</div>' +
-      '<div class="bottom-bar"><button class="btn-primary" data-action="measure">' + icon('plus', 16, 2.8) + 'Dodaj pomiar</button></div>';
+      '<div class="bottom-bar"><button class="btn-primary" data-action="measure">' + icon('plus', 16, 2.8) + tr('addMeasurement') + '</button></div>';
     bodyCtx = { pts: bodyPoints() };
     renderBodyHead(null);
     placeThumbs();
-    mountChart($('#b-chart'), bodyCtx.pts, true, bodyChartOpts);
+    mountChart($('#b-chart'), bodyCtx.pts, true, bodyChartOpts());
     renderBodyLog();
   }
 
@@ -1418,11 +1920,11 @@
     var shown = selected || (pts.length ? pts[pts.length - 1] : null);
     var sub;
     if (selected) sub = '<span>' + esc(dfLong.format(new Date(selected.date))) + '</span>';
-    else if (pts.length > 1) sub = changeChip(pts[pts.length - 1].value - pts[0].value, 'kg') + '<span class="muted">' + byId(RANGES, ui.bodyRange).caption + '</span>';
-    else sub = '<span class="muted">' + (pts.length ? 'Dodawaj pomiary regularnie, np. raz w tygodniu' : 'Brak pomiarów wagi') + '</span>';
+    else if (pts.length > 1) sub = changeChip(pts[pts.length - 1].value - pts[0].value, 'kg') + '<span class="muted">' + tr('rc_' + ui.bodyRange) + '</span>';
+    else sub = '<span class="muted">' + tr(pts.length ? 'measureRegularly' : 'noWeightYet') + '</span>';
     var h = state.profile.height;
-    $('#b-head').innerHTML = '<div class="eyebrow accent">Ciało' + (h ? ' · ' + fmtInt(h) + ' cm' : '') + '</div>' +
-      '<h1 class="d-title">Sylwetka</h1>' +
+    $('#b-head').innerHTML = '<div class="eyebrow accent">' + tr('bodyEyebrow') + (h ? ' · ' + fmtInt(h) + ' cm' : '') + '</div>' +
+      '<h1 class="d-title">' + tr('physique') + '</h1>' +
       '<div class="big xl"><span class="num">' + (shown ? fmtW(shown.value) : '—') + '</span><span class="unit">kg</span></div>' +
       '<div class="d-sub">' + sub + '</div>';
   }
@@ -1436,24 +1938,24 @@
 
   function indicesSection(idx) {
     var sex = idx.sex;
-    var needProfile = !sex || !idx.height ? 'Uzupełnij płeć i wzrost' : null;
-    var bfHint = needProfile || (sex === 'f' ? 'Dodaj talię, szyję i biodra' : 'Dodaj obwód talii i szyi') + ' albo wpisz % tłuszczu';
-    var ffmiHint = !idx.weight ? 'Dodaj wagę' : (idx.bodyFat === null ? 'Potrzebny % tłuszczu' : 'Uzupełnij wzrost');
-    return '<section class="fx" style="--d:.14s"><div class="sec-head"><span class="eyebrow">Wskaźniki</span><span class="muted">dla trenujących</span></div>' +
+    var needProfile = !sex || !idx.height ? tr('hintProfile') : null;
+    var bfHint = needProfile || tr(sex === 'f' ? 'hintBfFemale' : 'hintBfMale');
+    var ffmiHint = !idx.weight ? tr('hintWeight') : (idx.bodyFat === null ? tr('hintNeedBf') : tr('hintHeight'));
+    return '<section class="fx" style="--d:.14s"><div class="sec-head"><span class="eyebrow">' + tr('indices') + '</span><span class="muted">' + tr('forLifters') + '</span></div>' +
       '<div class="grid2">' +
-      indexCard('Tkanka tłuszczowa', idx.bodyFat !== null ? fmtW(idx.bodyFat) : null, '%', idx.bodyFat !== null ? verdictBodyFat(idx.bodyFat, sex) : null, idx.bodyFatSource, bfHint) +
-      indexCard('FFMI', idx.ffmiNorm ? fmtW(idx.ffmiNorm) : null, '', idx.ffmiNorm ? verdictFFMI(idx.ffmiNorm, sex) : null, idx.ffmi ? 'znormalizowany · surowy ' + fmtW(idx.ffmi) : '', ffmiHint) +
-      indexCard('Sylwetka V', idx.vRatio ? fmt2(idx.vRatio) : null, '', idx.vRatio ? verdictV(idx.vRatio) : null, 'barki : talia', 'Dodaj obwód barków i talii') +
-      indexCard('Masa beztłuszczowa', idx.lbm ? fmtW(idx.lbm) : null, 'kg', null, idx.lbm ? 'mięśnie, kości, woda' : '', ffmiHint) +
-      indexCard('Talia : wzrost', idx.whtr ? fmt2(idx.whtr) : null, '', idx.whtr ? verdictWHtR(idx.whtr) : null, 'cel poniżej 0,50', idx.height ? 'Dodaj obwód talii' : 'Uzupełnij wzrost i talię') +
-      indexCard('Talia : biodra', idx.whr ? fmt2(idx.whr) : null, '', idx.whr ? verdictWHR(idx.whr, sex) : null, 'WHR', 'Dodaj obwód talii i bioder') +
+      indexCard(tr('b_bodyFat'), idx.bodyFat !== null ? fmtW(idx.bodyFat) : null, '%', idx.bodyFat !== null ? verdictBodyFat(idx.bodyFat, sex) : null, idx.bodyFatSource ? tr(idx.bodyFatSource) : '', bfHint) +
+      indexCard('FFMI', idx.ffmiNorm ? fmtW(idx.ffmiNorm) : null, '', idx.ffmiNorm ? verdictFFMI(idx.ffmiNorm, sex) : null, idx.ffmi ? tr('ffmiNote', fmtW(idx.ffmi)) : '', ffmiHint) +
+      indexCard(tr('vShape'), idx.vRatio ? fmt2(idx.vRatio) : null, '', idx.vRatio ? verdictV(idx.vRatio) : null, tr('vShapeNote'), tr('hintShoulders')) +
+      indexCard(tr('leanMass'), idx.lbm ? fmtW(idx.lbm) : null, 'kg', null, idx.lbm ? tr('leanMassNote') : '', ffmiHint) +
+      indexCard(tr('whtr'), idx.whtr ? fmt2(idx.whtr) : null, '', idx.whtr ? verdictWHtR(idx.whtr) : null, tr('whtrNote', fmt2(0.5)), tr(idx.height ? 'hintWaist' : 'hintHeightWaist')) +
+      indexCard(tr('whr'), idx.whr ? fmt2(idx.whr) : null, '', idx.whr ? verdictWHR(idx.whr, sex) : null, 'WHR', tr('hintWaistHips')) +
       '</div></section>';
   }
 
   function strengthSection(idx) {
-    var h = '<section class="fx" style="--d:.19s"><div class="sec-head"><span class="eyebrow">Siła względna</span><span class="muted">szac. 1RM ÷ masa ciała</span></div>';
-    if (!idx.weight) return h + '<div class="card note-card">Dodaj pomiar wagi, aby porównać siłę z masą ciała.</div></section>';
-    if (!idx.strength.length && !idx.dots) return h + '<div class="card note-card">Zapisz serie z ciężarem, aby zobaczyć siłę względną.</div></section>';
+    var h = '<section class="fx" style="--d:.19s"><div class="sec-head"><span class="eyebrow">' + tr('relStrength') + '</span><span class="muted">' + tr('relStrengthSub') + '</span></div>';
+    if (!idx.weight) return h + '<div class="card note-card">' + tr('relNeedWeight') + '</div></section>';
+    if (!idx.strength.length && !idx.dots) return h + '<div class="card note-card">' + tr('relNeedSets') + '</div></section>';
     h += '<div class="card str">';
     if (idx.dots) {
       h += '<div class="str-dots"><div><div class="k">DOTS</div><div class="dots-v">' + fmtInt(idx.dots.value) + '</div></div>' +
@@ -1465,7 +1967,7 @@
       return '<div class="str-row"><div class="str-top"><span class="str-name">' + esc(s.ex.name) + '</span>' +
         '<span class="str-ratio"><b>' + fmt2(s.ratio) + '</b>×</span></div>' +
         '<div class="str-bar"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
-        '<div class="hint">szac. 1RM ' + fmtW(s.oneRM) + ' kg</div></div>';
+        '<div class="hint">' + tr('est1RM', fmtW(s.oneRM)) + '</div></div>';
     }).join('');
     return h + '</div></section>';
   }
@@ -1476,24 +1978,104 @@
     var list = state.body.slice().sort(function (a, b) { return b.date - a.date; });
     var latest = ['waist', 'neck', 'hips', 'shoulders'].map(function (f) {
       var l = latestBody(f);
-      return '<div><b>' + (l ? fmtW(l.value) + '<small>cm</small>' : '—') + '</b><span>' + BODY_META[f].label + '</span></div>';
+      return '<div><b>' + (l ? fmtW(l.value) + '<small>cm</small>' : '—') + '</b><span>' + tr('b_' + f) + '</span></div>';
     }).join('');
-    var h = '<div class="sec-head"><span class="eyebrow">Pomiary</span><span class="muted">' + list.length + ' ' +
-      plural(list.length, 'wpis', 'wpisy', 'wpisów') + '</span></div>' +
+    var h = '<div class="sec-head"><span class="eyebrow">' + tr('measurements') + '</span><span class="muted">' + tn(list.length, 'entries') + '</span></div>' +
       '<div class="card quad">' + latest + '</div>';
     if (list.length) {
       h += '<div class="card hist">' + list.slice(0, ui.bodyLimit).map(function (b) {
         var parts = [];
         ['bodyFat', 'waist', 'neck', 'hips', 'shoulders'].forEach(function (f) {
-          if (b[f] !== undefined) parts.push(BODY_META[f].label.toLowerCase().split(' ')[0] + ' ' + fmtW(b[f]) + (f === 'bodyFat' ? '%' : ''));
+          if (b[f] !== undefined) parts.push(tr('bs_' + f) + ' ' + fmtW(b[f]) + (f === 'bodyFat' ? '%' : ''));
         });
         return '<div class="hrow"><div class="h-main"><div class="h-date">' + dfDayMonth.format(new Date(b.date)) + '</div>' +
-          '<div class="h-sub">' + (parts.length ? esc(parts.join(' · ')) : 'tylko waga') + '</div></div>' +
+          '<div class="h-sub">' + (parts.length ? esc(parts.join(' · ')) : tr('weightOnly')) + '</div></div>' +
           '<div class="h-val">' + (b.weight !== undefined ? '<b>' + fmtW(b.weight) + '</b><small>kg</small>' : '') + '</div>' +
-          '<button class="h-del" data-action="delete-body" data-id="' + b.id + '" aria-label="Usuń pomiar">' + icon('trash', 15, 2) + '</button></div>';
+          '<button class="h-del" data-action="delete-body" data-id="' + b.id + '" aria-label="' + tr('deleteMeasurement') + '">' + icon('trash', 15, 2) + '</button></div>';
       }).join('') + '</div>';
-      if (list.length > ui.bodyLimit) h += '<button class="more-btn" data-action="more-body">Pokaż więcej</button>';
+      if (list.length > ui.bodyLimit) h += '<button class="more-btn" data-action="more-body">' + tr('showMore') + '</button>';
     }
+    el.innerHTML = h;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Recovery screen
+  // ---------------------------------------------------------------------------
+
+  function recChartOpts() { return { fmt: fmtInt, onSelect: renderRecHead, empty: tr('recChartEmpty') }; }
+
+  function renderRecovery(enter) {
+    detailCtx = null;
+    bodyCtx = null;
+    app.innerHTML = '<div class="view detail' + (enter ? ' enter' : '') + '">' +
+      '<nav class="nav fx" style="--d:0s"><button class="icon-btn" data-action="back" aria-label="' + tr('back') + '">' + icon('back', 20, 2.4) + '</button></nav>' +
+      '<section id="r-head" class="fx" style="--d:.03s"></section>' +
+      '<section class="card chart-card fx" style="--d:.08s"><div class="row-between chart-top"><span class="eyebrow">' + tr('minutesPerWeek') + '</span>' +
+      '<span class="muted">' + tr('twelveWeeks') + '</span></div><div class="chart" id="r-chart"></div></section>' +
+      '<section id="r-types" class="fx" style="--d:.14s"></section>' +
+      '<section id="r-log" class="fx" style="--d:.2s"></section>' +
+      '</div>' +
+      '<div class="bottom-bar"><button class="btn-primary" data-action="add-recovery">' + icon('plus', 16, 2.8) + tr('addRecovery') + '</button></div>';
+    var pts = recoveryWeeks(12);
+    recCtx = { pts: pts.some(function (p) { return p.value > 0; }) ? pts : [] };
+    renderRecHead(null);
+    mountChart($('#r-chart'), recCtx.pts, true, recChartOpts());
+    renderRecTypes();
+    renderRecLog();
+  }
+
+  function renderRecHead(selected) {
+    if (!recCtx) return;
+    var now = Date.now(), today = startOfDay(now);
+    var cur = minutesOf(recoveryBetween(addDays(today, -6), now + 1));
+    var prev = minutesOf(recoveryBetween(addDays(today, -13), addDays(today, -6)));
+    var value, sub;
+    if (selected) {
+      value = selected.value;
+      sub = '<span>' + tr('weekOf', esc(dfDayMonth.format(new Date(selected.date)))) + '</span>';
+    } else {
+      value = cur;
+      sub = (cur || prev ? changeChip(cur - prev, 'min') : '') + '<span class="muted">' + tr('vsPrev7') + '</span>';
+    }
+    var d = bigDur(value);
+    $('#r-head').innerHTML = '<div class="eyebrow accent">' + tr(selected ? 'weekTotal' : 'last7Days') + '</div>' +
+      '<h1 class="d-title">' + tr('recovery') + '</h1>' +
+      '<div class="big xl"><span class="num">' + d.num + '</span><span class="unit">' + d.unit + '</span></div>' +
+      '<div class="d-sub">' + sub + '</div>';
+  }
+
+  function renderRecTypes() {
+    var el = $('#r-types');
+    if (!el) return;
+    var groups = recoveryByType(recoveryBetween(Date.now() - 30 * DAY, Date.now() + 1));
+    if (!groups.length) { el.innerHTML = ''; return; }
+    var max = groups[0].minutes;
+    el.innerHTML = '<div class="sec-head"><span class="eyebrow">' + tr('byActivity') + '</span><span class="muted">' + tr('last30Days') + '</span></div>' +
+      '<div class="card str">' + groups.map(function (g) {
+        return '<div class="str-row"><div class="str-top"><span class="str-name rec-name">' + icon(g.type.icon, 15, 2.1) + esc(g.type.label) + '</span>' +
+          '<span class="str-ratio"><b>' + fmtDur(g.minutes) + '</b></span></div>' +
+          '<div class="str-bar"><i style="width:' + (g.minutes / max * 100).toFixed(1) + '%"></i></div>' +
+          '<div class="hint">' + tn(g.count, 'sessions') + ' · ' + tr('avgSession', fmtDur(g.minutes / g.count)) + '</div></div>';
+      }).join('') + '</div>';
+  }
+
+  function renderRecLog() {
+    var el = $('#r-log');
+    if (!el) return;
+    var list = state.recovery.slice().sort(function (a, b) { return b.date - a.date; });
+    var h = '<div class="sec-head"><span class="eyebrow">' + tr('history') + '</span><span class="muted">' + tn(list.length, 'entries') + '</span></div>';
+    if (!list.length) {
+      el.innerHTML = h + '<div class="card note-card">' + tr('recEmpty') + '</div>';
+      return;
+    }
+    h += '<div class="card hist">' + list.slice(0, ui.recLimit).map(function (r) {
+      var type = recoveryType(r.type);
+      return '<div class="hrow"><span class="rec-ic">' + icon(type.icon, 16, 2) + '</span><div class="h-main"><div class="h-date">' + esc(type.label) + '</div>' +
+        '<div class="h-sub">' + esc(dfLong.format(new Date(r.date))) + '</div></div>' +
+        '<div class="h-val"><b>' + r.minutes + '</b><small>min</small></div>' +
+        '<button class="h-del" data-action="delete-recovery" data-id="' + r.id + '" aria-label="' + tr('deleteEntry') + '">' + icon('trash', 15, 2) + '</button></div>';
+    }).join('') + '</div>';
+    if (list.length > ui.recLimit) h += '<button class="more-btn" data-action="more-rec">' + tr('showMore') + '</button>';
     el.innerHTML = h;
   }
 
@@ -1505,7 +2087,7 @@
     var root = $('#sheet-root');
     root.innerHTML = '<div class="sheet-backdrop" data-action="close-sheet"></div>' +
       '<div class="sheet" role="dialog" aria-modal="true"><div class="sheet-grab"></div>' +
-      '<button class="icon-btn sheet-close" data-action="close-sheet" aria-label="Zamknij">' + icon('close', 16, 2.4) + '</button>' +
+      '<button class="icon-btn sheet-close" data-action="close-sheet" aria-label="' + tr('close') + '">' + icon('close', 16, 2.4) + '</button>' +
       '<div class="sheet-body">' + html + '</div></div>';
     document.body.classList.add('sheet-open');
     root.getBoundingClientRect();
@@ -1520,6 +2102,7 @@
     logCtx = null;
     exCtx = null;
     profileCtx = null;
+    recLogCtx = null;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     if (immediate) { root.innerHTML = ''; return; }
     setTimeout(function () { if (!root.classList.contains('open')) root.innerHTML = ''; }, 450);
@@ -1529,9 +2112,9 @@
 
   function counterRow(label, key) {
     return '<div class="card row-card"><span class="lbl">' + label + '</span><div class="counter">' +
-      '<button class="round sm" data-action="cnt" data-key="' + key + '" data-step="-1" aria-label="Mniej">' + icon('minus', 18, 2.6) + '</button>' +
+      '<button class="round sm" data-action="cnt" data-key="' + key + '" data-step="-1" aria-label="' + tr('less') + '">' + icon('minus', 18, 2.6) + '</button>' +
       '<b id="c-' + key + '">' + logCtx[key] + '</b>' +
-      '<button class="round sm" data-action="cnt" data-key="' + key + '" data-step="1" aria-label="Więcej">' + icon('plus', 18, 2.6) + '</button>' +
+      '<button class="round sm" data-action="cnt" data-key="' + key + '" data-step="1" aria-label="' + tr('more') + '">' + icon('plus', 18, 2.6) + '</button>' +
       '</div></div>';
   }
 
@@ -1547,29 +2130,29 @@
     var today = isoDay(Date.now());
     var startWeight = last ? last.weight : (bw ? 0 : 20);
     var bodyNow = bodyWeightNow();
-    openSheet('<div class="sheet-head"><div class="eyebrow accent">Nowa seria' + (bw ? ' · masa ciała' : '') + '</div><h2>' + esc(ex.name) + '</h2></div>' +
+    openSheet('<div class="sheet-head"><div class="eyebrow accent">' + tr('newSet') + (bw ? ' · ' + tr('bodyweightLower') : '') + '</div><h2>' + esc(ex.name) + '</h2></div>' +
       '<div class="card weight-card">' +
-      '<button class="round" data-action="w-step" data-step="-2.5" aria-label="Odejmij 2,5 kg">' + icon('minus', 20, 2.6) + '</button>' +
-      '<label class="weight-field"><input id="w-input" type="text" inputmode="decimal" autocomplete="off" value="' + inputNum(startWeight) + '" aria-label="' + (bw ? 'Dodatkowe obciążenie w kilogramach' : 'Ciężar w kilogramach') + '">' +
-      '<span class="eyebrow">' + (bw ? 'Dodatkowe kg' : 'Kilogramy') + '</span></label>' +
-      '<button class="round filled" data-action="w-step" data-step="2.5" aria-label="Dodaj 2,5 kg">' + icon('plus', 20, 2.6) + '</button></div>' +
-      (bw ? '<p class="note tight center">' + (bodyNow ? 'Liczymy Twoją masę ciała (' + fmtW(bodyNow) + ' kg) + dodatkowe obciążenie.' : 'Zostaw 0, jeśli ćwiczysz bez obciążenia. Dodaj wagę w „Sylwetka”, aby liczyć wolumen.') + '</p>' : '') +
+      '<button class="round" data-action="w-step" data-step="-2.5" aria-label="' + tr('minusStep', inputNum(2.5)) + '">' + icon('minus', 20, 2.6) + '</button>' +
+      '<label class="weight-field"><input id="w-input" type="text" inputmode="decimal" autocomplete="off" value="' + inputNum(startWeight) + '" aria-label="' + tr(bw ? 'extraKgAria' : 'kgAria') + '">' +
+      '<span class="eyebrow">' + tr(bw ? 'extraKg' : 'kilograms') + '</span></label>' +
+      '<button class="round filled" data-action="w-step" data-step="2.5" aria-label="' + tr('plusStep', inputNum(2.5)) + '">' + icon('plus', 20, 2.6) + '</button></div>' +
+      (bw ? '<p class="note tight center">' + (bodyNow ? tr('bwCounted', fmtW(bodyNow)) : tr('bwZeroHint')) + '</p>' : '') +
       '<div class="chips4">' + [-10, -5, 5, 10].map(function (s) {
         return '<button class="qchip' + (s > 0 ? ' plus' : '') + '" data-action="w-step" data-step="' + s + '">' + (s > 0 ? '+' : '−') + Math.abs(s) + '</button>';
       }).join('') + '</div>' +
-      counterRow('Powtórzenia', 'reps') + counterRow('Serie', 'sets') +
-      '<div class="card row-card"><span class="lbl">Data</span><input id="d-input" class="date-input" type="date" value="' + today + '" max="' + today + '"></div>' +
+      counterRow(tr('reps'), 'reps') + counterRow(tr('sets'), 'sets') +
+      '<div class="card row-card"><span class="lbl">' + tr('date') + '</span><input id="d-input" class="date-input" type="date" value="' + today + '" max="' + today + '"></div>' +
       '<div class="sum">' +
-      '<div class="card tile s-1rm"><div class="k">' + (bw ? 'Powt. łącznie' : 'Szac. 1RM') + '</div><div class="v" id="s-1rm"></div></div>' +
-      '<div class="card tile"><div class="k">' + (bw ? 'Obciążenie' : 'Wolumen') + '</div><div class="v" id="s-vol"></div></div>' +
-      '<div class="card tile"><div class="k">Rekord</div><div class="v">' + recordText() + '</div></div>' +
+      '<div class="card tile s-1rm"><div class="k">' + tr(bw ? 'totalRepsShort' : 'est1RMShort') + '</div><div class="v" id="s-1rm"></div></div>' +
+      '<div class="card tile"><div class="k">' + tr(bw ? 'm_load' : 'm_volume') + '</div><div class="v" id="s-vol"></div></div>' +
+      '<div class="card tile"><div class="k">' + tr('record') + '</div><div class="v">' + recordText() + '</div></div>' +
       '</div>' +
-      '<button class="btn-primary" id="save-entry" data-action="save-entry">' + icon('check', 17, 2.8) + '<span>Zapisz</span></button>');
+      '<button class="btn-primary" id="save-entry" data-action="save-entry">' + icon('check', 17, 2.8) + '<span>' + tr('save') + '</span></button>');
     updateLog();
   }
 
   function recordText() {
-    if (logCtx.bw) return logCtx.bestReps !== null ? fmtInt(logCtx.bestReps) + '<small>powt.</small>' : '—';
+    if (logCtx.bw) return logCtx.bestReps !== null ? fmtInt(logCtx.bestReps) + '<small>' + tr('u_reps') + '</small>' : '—';
     return logCtx.best !== null ? fmtW(logCtx.best) + '<small>kg</small>' : '—';
   }
 
@@ -1587,8 +2170,8 @@
     logCtx.isRecord = valid && logCtx.best !== null && score > logCtx.best + 0.01;
     if (logCtx.bw) {
       var bodyNow = bodyWeightNow();
-      $('#s-1rm').innerHTML = fmtInt(logCtx.reps * logCtx.sets) + '<small>powt.</small>';
-      $('#s-vol').innerHTML = valid ? (bodyNow ? fmtW(bodyNow + w) + '<small>kg</small>' : (w > 0 ? '+' + fmtW(w) + '<small>kg</small>' : 'ciało')) : '—';
+      $('#s-1rm').innerHTML = fmtInt(logCtx.reps * logCtx.sets) + '<small>' + tr('u_reps') + '</small>';
+      $('#s-vol').innerHTML = valid ? (bodyNow ? fmtW(bodyNow + w) + '<small>kg</small>' : (w > 0 ? '+' + fmtW(w) + '<small>kg</small>' : tr('bodyShort'))) : '—';
     } else {
       $('#s-1rm').innerHTML = valid ? fmtW(score) + '<small>kg</small>' : '—';
       $('#s-vol').innerHTML = valid ? fmtInt(w * logCtx.reps * logCtx.sets) + '<small>kg</small>' : '—';
@@ -1596,7 +2179,7 @@
     $('.s-1rm').classList.toggle('hl', logCtx.isRecord);
     var btn = $('#save-entry');
     btn.disabled = !valid;
-    btn.querySelector('span').textContent = logCtx.isRecord ? 'Zapisz rekord' : 'Zapisz';
+    btn.querySelector('span').textContent = tr(logCtx.isRecord ? 'saveRecord' : 'save');
   }
 
   function saveEntry() {
@@ -1609,9 +2192,84 @@
     commit();
     closeSheet();
     refresh();
-    if (!ctx.isRecord) { toast('Zapisano serię'); return; }
-    if (ctx.bw) celebrate(fmtInt(ctx.reps), 'powt.', w > 0 ? 'z obciążeniem +' + fmtW(w) + ' kg' : 'masa ciała');
-    else celebrate(fmtW(oneRM(w, ctx.reps)), 'kg', 'szacowane 1RM');
+    if (!ctx.isRecord) { toast(tr('setSaved')); return; }
+    if (ctx.bw) celebrate(fmtInt(ctx.reps), tr('u_reps'), w > 0 ? tr('withLoad', fmtW(w)) : tr('bodyweightLower'));
+    else celebrate(fmtW(oneRM(w, ctx.reps)), 'kg', tr('est1RMLong'));
+  }
+
+  // ----- Log recovery -----
+
+  function recTypeChips(selected) {
+    return recoveryTypesAll().map(function (r) {
+      return '<button class="gchip' + (r.id === selected ? ' on' : '') + '" data-action="pick-rtype" data-value="' + esc(r.id) + '">' +
+        icon(r.icon, 16, 2) + '<span>' + esc(r.label) + '</span></button>';
+    }).join('') + '<button class="gchip add" data-action="new-rtype">' + icon('plus', 14, 2.6) + '<span>' + tr('newShort') + '</span></button>';
+  }
+
+  function openRecoveryLog() {
+    var last = null;
+    state.recovery.forEach(function (r) { if (!last || r.date > last.date) last = r; });
+    var type = last ? last.type : RECOVERY_TYPES[0].id;
+    recLogCtx = { type: type };
+    var today = isoDay(Date.now());
+    openSheet('<div class="sheet-head"><div class="eyebrow accent">' + tr('recovery') + '</div><h2>' + tr('recSheetTitle') + '</h2></div>' +
+      '<div class="rtypes" id="rtype-chips">' + recTypeChips(type) + '</div>' +
+      '<div id="new-rtype" class="inline-add" hidden><input id="rtype-name" class="text-input sm" type="text" placeholder="' + tr('recTypePlaceholder') +
+      '" maxlength="24" autocomplete="off"><button class="btn-primary sm" data-action="save-rtype">' + tr('add') + '</button></div>' +
+      '<div class="card weight-card rec-min">' +
+      '<button class="round" data-action="m-step" data-step="-5" aria-label="' + tr('minusMin') + '">' + icon('minus', 20, 2.6) + '</button>' +
+      '<label class="weight-field"><input id="min-input" type="text" inputmode="numeric" autocomplete="off" value="' + lastMinutes(type) + '" aria-label="' + tr('minutes') + '">' +
+      '<span class="eyebrow">' + tr('minutes') + '</span></label>' +
+      '<button class="round filled" data-action="m-step" data-step="5" aria-label="' + tr('plusMin') + '">' + icon('plus', 20, 2.6) + '</button></div>' +
+      '<div class="chips4">' + [5, 10, 15, 20, 30, 45, 60, 90].map(function (m) {
+        return '<button class="qchip" data-action="m-set" data-value="' + m + '">' + m + '</button>';
+      }).join('') + '</div>' +
+      '<div class="card row-card"><span class="lbl">' + tr('date') + '</span><input id="r-date" class="date-input" type="date" value="' + today + '" max="' + today + '"></div>' +
+      '<button class="btn-primary sheet-cta" data-action="save-recovery">' + icon('check', 17, 2.8) + tr('save') + '</button>');
+  }
+
+  function setMinutes(v) {
+    var input = $('#min-input');
+    if (!input) return;
+    input.value = String(Math.min(RECOVERY_MAX, Math.max(1, Math.round(v))));
+    bump(input);
+  }
+
+  function pickRecoveryType(id) {
+    if (!recLogCtx) return;
+    recLogCtx.type = id;
+    setChoice('#rtype-chips .gchip[data-action="pick-rtype"]', id);
+    setMinutes(lastMinutes(id));
+  }
+
+  function saveRecoveryType() {
+    var input = $('#rtype-name');
+    var label = input.value.trim().slice(0, 24);
+    if (!label) { input.focus(); return; }
+    var dupe = null;
+    recoveryTypesAll().forEach(function (r) { if (r.label.toLowerCase() === label.toLowerCase()) dupe = r; });
+    var id = dupe ? dupe.id : 'q_' + uid();
+    if (!dupe) {
+      state.recoveryTypes.push({ id: id, label: label.charAt(0).toUpperCase() + label.slice(1) });
+      commit();
+    }
+    $('#rtype-chips').innerHTML = recTypeChips(id);
+    pickRecoveryType(id);
+    input.value = '';
+    $('#new-rtype').hidden = true;
+    toast(tr(dupe ? 'recTypeExists' : 'recTypeAdded'));
+  }
+
+  function saveRecovery() {
+    if (!recLogCtx) return;
+    var m = parseNum($('#min-input').value);
+    if (!(m >= 1 && m <= RECOVERY_MAX)) { toast(tr('minutesInvalid', RECOVERY_MAX)); return; }
+    var type = recLogCtx.type;
+    state.recovery.push({ id: uid(), date: pickedDate($('#r-date').value), type: type, minutes: Math.round(m) });
+    commit();
+    closeSheet();
+    refresh();
+    toast(tr('recSaved', recoveryType(type).label, fmtDur(m)));
   }
 
   // ----- Add / edit exercise -----
@@ -1619,7 +2277,7 @@
   function groupChips(selected) {
     return allGroups().map(function (g) {
       return '<button class="gchip' + (g.id === selected ? ' on' : '') + '" data-action="pick-group" data-value="' + esc(g.id) + '">' + esc(g.label) + '</button>';
-    }).join('') + '<button class="gchip add" data-action="new-group">' + icon('plus', 12, 2.6) + 'Nowa</button>';
+    }).join('') + '<button class="gchip add" data-action="new-group">' + icon('plus', 12, 2.6) + tr('newShort') + '</button>';
   }
 
   function openExerciseSheet(editId) {
@@ -1627,22 +2285,24 @@
     exCtx = { editId: ex ? ex.id : null, group: ex ? ex.group : 'chest', type: ex ? ex.type : 'weight' };
     var existing = {};
     state.exercises.forEach(function (e) { existing[e.name.toLowerCase()] = true; });
-    var sugs = ex ? [] : SUGGESTIONS.filter(function (s) { return !existing[s[0].toLowerCase()]; });
-    openSheet('<div class="sheet-head"><div class="eyebrow accent">' + (ex ? 'Edytuj ćwiczenie' : 'Nowe ćwiczenie') + '</div><h2>' + (ex ? esc(ex.name) : 'Co dziś podnosisz?') + '</h2></div>' +
-      '<input id="ex-name" class="text-input" type="text" placeholder="Nazwa ćwiczenia" autocomplete="off" maxlength="40" enterkeyhint="done" value="' + (ex ? esc(ex.name) : '') + '">' +
-      '<span class="eyebrow label">Rodzaj</span><div class="types">' +
-      '<button class="gchip' + (exCtx.type === 'weight' ? ' on' : '') + '" data-action="pick-type" data-value="weight">' + icon('weight', 14, 2) + 'Z ciężarem</button>' +
-      '<button class="gchip' + (exCtx.type === 'bodyweight' ? ' on' : '') + '" data-action="pick-type" data-value="bodyweight">' + icon('user', 14, 2) + 'Masa ciała</button>' +
+    var sugs = ex ? [] : SUGGESTIONS
+      .map(function (s) { return [tr('ex_' + s[0]), s[1], s[2]]; })
+      .filter(function (s) { return !existing[s[0].toLowerCase()]; });
+    openSheet('<div class="sheet-head"><div class="eyebrow accent">' + tr(ex ? 'editExercise' : 'newExercise') + '</div><h2>' + (ex ? esc(ex.name) : tr('newExerciseTitle')) + '</h2></div>' +
+      '<input id="ex-name" class="text-input" type="text" placeholder="' + tr('exerciseName') + '" autocomplete="off" maxlength="40" enterkeyhint="done" value="' + (ex ? esc(ex.name) : '') + '">' +
+      '<span class="eyebrow label">' + tr('type') + '</span><div class="types">' +
+      '<button class="gchip' + (exCtx.type === 'weight' ? ' on' : '') + '" data-action="pick-type" data-value="weight">' + icon('weight', 14, 2) + tr('typeWeight') + '</button>' +
+      '<button class="gchip' + (exCtx.type === 'bodyweight' ? ' on' : '') + '" data-action="pick-type" data-value="bodyweight">' + icon('user', 14, 2) + tr('typeBodyweight') + '</button>' +
       '</div>' +
-      '<span class="eyebrow label">Kategoria</span><div class="groups" id="group-chips">' + groupChips(exCtx.group) + '</div>' +
-      '<div id="new-group" class="inline-add" hidden><input id="group-name" class="text-input sm" type="text" placeholder="Nazwa kategorii, np. Łydki" maxlength="24" autocomplete="off">' +
-      '<button class="btn-primary sm" data-action="save-group">Dodaj</button></div>' +
-      (sugs.length ? '<span class="eyebrow label">Popularne</span><div class="sugs">' + sugs.map(function (s) {
+      '<span class="eyebrow label">' + tr('category') + '</span><div class="groups" id="group-chips">' + groupChips(exCtx.group) + '</div>' +
+      '<div id="new-group" class="inline-add" hidden><input id="group-name" class="text-input sm" type="text" placeholder="' + tr('groupPlaceholder') + '" maxlength="24" autocomplete="off">' +
+      '<button class="btn-primary sm" data-action="save-group">' + tr('add') + '</button></div>' +
+      (sugs.length ? '<span class="eyebrow label">' + tr('popular') + '</span><div class="sugs">' + sugs.map(function (s) {
         return '<button class="sug" data-action="suggest" data-name="' + esc(s[0]) + '" data-group="' + s[1] + '" data-type="' + s[2] + '">' +
-          esc(s[0]) + (s[2] === 'bodyweight' ? '<small>masa ciała</small>' : '') + '</button>';
+          esc(s[0]) + (s[2] === 'bodyweight' ? '<small>' + tr('bodyweightLower') + '</small>' : '') + '</button>';
       }).join('') + '</div>' : '') +
       '<button class="btn-primary sheet-cta" id="add-save" data-action="add-save"' + (ex ? '' : ' disabled') + '>' +
-      icon(ex ? 'check' : 'plus', 16, 2.8) + (ex ? 'Zapisz zmiany' : 'Dodaj ćwiczenie') + '</button>');
+      icon(ex ? 'check' : 'plus', 16, 2.8) + tr(ex ? 'saveChanges' : 'addExercise') + '</button>');
   }
 
   function setChoice(selector, value) {
@@ -1678,7 +2338,7 @@
     pickGroup(id);
     input.value = '';
     $('#new-group').hidden = true;
-    toast(dupe ? 'Ta kategoria już istnieje' : 'Dodano kategorię');
+    toast(tr(dupe ? 'groupExists' : 'groupAdded'));
   }
 
   function updateAdd() {
@@ -1697,7 +2357,7 @@
     if (!name) return;
     var editId = exCtx.editId;
     var dupe = state.exercises.some(function (e) { return e.id !== editId && e.name.toLowerCase() === name.toLowerCase(); });
-    if (dupe) { toast('To ćwiczenie już jest na liście'); return; }
+    if (dupe) { toast(tr('exerciseExists')); return; }
     if (editId) {
       var ex = findExercise(editId);
       ex.name = name;
@@ -1706,7 +2366,7 @@
       commit();
       closeSheet();
       refresh();
-      toast('Zapisano zmiany');
+      toast(tr('changesSaved'));
       return;
     }
     var created = { id: uid(), name: name, group: exCtx.group, type: exCtx.type, createdAt: Date.now() };
@@ -1721,44 +2381,44 @@
   function openProfile() {
     var p = state.profile;
     profileCtx = { sex: p.sex };
-    openSheet('<div class="sheet-head"><div class="eyebrow accent">Profil</div><h2>O Tobie</h2></div>' +
-      '<p class="note">Płeć i wzrost są potrzebne do wzorów na tkankę tłuszczową, FFMI i DOTS. Dane zostają w telefonie.</p>' +
-      '<span class="eyebrow label">Płeć</span><div class="types">' +
-      '<button class="gchip' + (p.sex === 'm' ? ' on' : '') + '" data-action="pick-sex" data-value="m">Mężczyzna</button>' +
-      '<button class="gchip' + (p.sex === 'f' ? ' on' : '') + '" data-action="pick-sex" data-value="f">Kobieta</button></div>' +
-      '<span class="eyebrow label">Wzrost</span>' +
-      '<label class="field"><input id="p-height" class="text-input" type="text" inputmode="decimal" autocomplete="off" placeholder="np. 180" value="' + (p.height ? inputNum(p.height) : '') + '"><span>cm</span></label>' +
-      '<button class="btn-primary sheet-cta" data-action="save-profile">' + icon('check', 17, 2.8) + 'Zapisz profil</button>');
+    openSheet('<div class="sheet-head"><div class="eyebrow accent">' + tr('profile') + '</div><h2>' + tr('aboutYou') + '</h2></div>' +
+      '<p class="note">' + tr('profileNote') + '</p>' +
+      '<span class="eyebrow label">' + tr('sex') + '</span><div class="types">' +
+      '<button class="gchip' + (p.sex === 'm' ? ' on' : '') + '" data-action="pick-sex" data-value="m">' + tr('male') + '</button>' +
+      '<button class="gchip' + (p.sex === 'f' ? ' on' : '') + '" data-action="pick-sex" data-value="f">' + tr('female') + '</button></div>' +
+      '<span class="eyebrow label">' + tr('height') + '</span>' +
+      '<label class="field"><input id="p-height" class="text-input" type="text" inputmode="decimal" autocomplete="off" placeholder="' + tr('heightPlaceholder') + '" value="' + (p.height ? inputNum(p.height) : '') + '"><span>cm</span></label>' +
+      '<button class="btn-primary sheet-cta" data-action="save-profile">' + icon('check', 17, 2.8) + tr('saveProfile') + '</button>');
   }
 
   function saveProfile() {
     if (!profileCtx) return;
     var raw = $('#p-height').value;
     var h = parseNum(raw);
-    if (String(raw).trim() && !(h >= 120 && h <= 230)) { toast('Wpisz wzrost w cm, np. 180'); return; }
+    if (String(raw).trim() && !(h >= 120 && h <= 230)) { toast(tr('heightInvalid')); return; }
     state.profile = { sex: profileCtx.sex, height: isFinite(h) ? Math.round(h * 10) / 10 : null };
     commit();
     closeSheet();
     refresh();
-    toast('Zapisano profil');
+    toast(tr('profileSaved'));
   }
 
   // ----- Measurements -----
 
   function openMeasure() {
     var today = isoDay(Date.now());
-    var fields = ['weight', 'bodyFat', 'waist', 'neck', 'hips', 'shoulders'].map(function (f) {
+    var fields = BODY_FIELDS.map(function (f) {
       var meta = BODY_META[f], last = latestBody(f);
-      return '<label class="field mfield"><span class="eyebrow">' + meta.label + '</span>' +
+      return '<label class="field mfield"><span class="eyebrow">' + tr('b_' + f) + '</span>' +
         '<span class="field-row"><input id="m-' + f + '" class="text-input" type="text" inputmode="decimal" autocomplete="off" placeholder="' +
-        (last ? inputNum(last.value) : (f === 'bodyFat' ? 'opcjonalnie' : '—')) + '"><span>' + meta.unit + '</span></span></label>';
+        (last ? inputNum(last.value) : (f === 'bodyFat' ? tr('optional') : '—')) + '"><span>' + meta.unit + '</span></span></label>';
     }).join('');
-    openSheet('<div class="sheet-head"><div class="eyebrow accent">Nowy pomiar</div><h2>Ciało</h2></div>' +
-      '<p class="note">Wpisz tylko to, co mierzysz dziś. Szare liczby to ostatnie wartości. Mierz rano, na czczo, centymetrem krawieckim.</p>' +
-      '<div class="card row-card"><span class="lbl">Data</span><input id="m-date" class="date-input" type="date" value="' + today + '" max="' + today + '"></div>' +
+    openSheet('<div class="sheet-head"><div class="eyebrow accent">' + tr('newMeasurement') + '</div><h2>' + tr('bodyEyebrow') + '</h2></div>' +
+      '<p class="note">' + tr('measureNote') + '</p>' +
+      '<div class="card row-card"><span class="lbl">' + tr('date') + '</span><input id="m-date" class="date-input" type="date" value="' + today + '" max="' + today + '"></div>' +
       '<div class="mgrid">' + fields + '</div>' +
-      '<p class="note small">Talia — na wysokości pępka · szyja — tuż pod krtanią · biodra — w najszerszym miejscu pośladków · barki — obwód w najszerszym miejscu, ramiona luźno.</p>' +
-      '<button class="btn-primary sheet-cta" data-action="save-measure">' + icon('check', 17, 2.8) + 'Zapisz pomiar</button>');
+      '<p class="note small">' + tr('measureHow') + '</p>' +
+      '<button class="btn-primary sheet-cta" data-action="save-measure">' + icon('check', 17, 2.8) + tr('saveMeasurement') + '</button>');
   }
 
   function saveMeasure() {
@@ -1767,12 +2427,12 @@
       var raw = $('#m-' + f).value;
       if (!String(raw).trim()) return;
       var v = parseNum(raw), meta = BODY_META[f];
-      if (!(v >= meta.min && v <= meta.max)) { bad = bad || meta; return; }
+      if (!(v >= meta.min && v <= meta.max)) { bad = bad || f; return; }
       values[f] = Math.round(v * 10) / 10;
       count++;
     });
-    if (bad) { toast(bad.label + ': wpisz wartość w ' + bad.unit); return; }
-    if (!count) { toast('Wpisz co najmniej jedną wartość'); return; }
+    if (bad) { toast(tr('measureInvalid', tr('b_' + bad), BODY_META[bad].unit)); return; }
+    if (!count) { toast(tr('measureEmpty')); return; }
     var date = pickedDate($('#m-date').value);
     var day = startOfDay(date);
     var existing = null;
@@ -1782,58 +2442,79 @@
     commit();
     closeSheet();
     refresh();
-    toast(existing ? 'Zaktualizowano pomiar z tego dnia' : 'Zapisano pomiar');
+    toast(tr(existing ? 'measureUpdated' : 'measureSaved'));
   }
 
   function merge(target, src) { Object.keys(src).forEach(function (k) { target[k] = src[k]; }); return target; }
 
   // ----- Settings -----
 
+  function chipList(list, action, labelKey) {
+    return '<div class="custom-groups">' + list.map(function (g) {
+      return '<span class="cg">' + esc(g.label) + '<button data-action="' + action + '" data-id="' + esc(g.id) + '" aria-label="' + tr(labelKey, esc(g.label)) + '">' +
+        icon('close', 12, 2.6) + '</button></span>';
+    }).join('') + '</div>';
+  }
+
   function openSettings(showRestore) {
-    var n = state.exercises.length, m = state.entries.length;
-    var custom = state.groups.length
-      ? '<div class="custom-groups">' + state.groups.map(function (g) {
-        return '<span class="cg">' + esc(g.label) + '<button data-action="delete-group" data-id="' + esc(g.id) + '" aria-label="Usuń kategorię ' + esc(g.label) + '">' + icon('close', 12, 2.6) + '</button></span>';
-      }).join('') + '</div>'
-      : '<p class="note small">Własne kategorie dodasz przy tworzeniu lub edycji ćwiczenia (przycisk „Nowa”).</p>';
-    openSheet('<div class="sheet-head"><div class="eyebrow accent">Ustawienia</div><h2>Kinetic</h2></div>' +
-      '<span class="eyebrow label">Cel tygodniowy · dni treningowe</span><div class="goal-row">' +
+    var locked = !hasPro();
+    var activeTheme = locked ? 'green' : prefs.theme;
+    openSheet('<div class="sheet-head"><div class="eyebrow accent">' + tr('settings') + '</div><h2>Kinetic</h2></div>' +
+      proSettingsBlock() +
+      '<span class="eyebrow label">' + tr('language') + '</span><div class="types three">' +
+      [['auto', tr('langAuto')], ['pl', 'Polski'], ['en', 'English']].map(function (o) {
+        return '<button class="gchip' + (prefs.lang === o[0] ? ' on' : '') + '" data-action="set-lang" data-value="' + o[0] + '">' + o[1] + '</button>';
+      }).join('') + '</div>' +
+      '<span class="eyebrow label">' + tr('theme') + proBadge() + '</span><div class="swatches">' +
+      THEMES.map(function (th) {
+        return '<button class="swatch' + (th.id === activeTheme ? ' on' : '') + '" data-action="set-theme" data-value="' + th.id + '" style="--sw:' + th.rgb + ';--sw2:' + th.rgb2 +
+          '" aria-label="' + tr('theme_' + th.id) + '">' + (locked && th.id !== 'green' ? icon('lock', 12, 2.6) : '') + '</button>';
+      }).join('') + '</div>' +
+      '<span class="eyebrow label">' + tr('weeklyGoal') + '</span><div class="goal-row">' +
       [2, 3, 4, 5, 6, 7].map(function (g) {
         return '<button class="gchip' + (g === state.goal ? ' on' : '') + '" data-action="goal" data-value="' + g + '">' + g + '</button>';
       }).join('') + '</div>' +
-      '<span class="eyebrow label">Profil</span>' +
-      '<div class="stack"><button class="btn-ghost" data-action="go-body">' + icon('user', 16, 2) + 'Sylwetka, waga i pomiary</button></div>' +
-      '<span class="eyebrow label">Własne kategorie</span>' + custom +
-      '<span class="eyebrow label">Kopia zapasowa</span>' +
-      '<p class="note">Dane są zapisane tylko na tym urządzeniu (' + n + ' ' + plural(n, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń') + ', ' + m + ' ' +
-      plural(m, 'wpis', 'wpisy', 'wpisów') + ', ' + state.body.length + ' ' + plural(state.body.length, 'pomiar', 'pomiary', 'pomiarów') +
-      '). Kod kopii przenosi je na inny telefon lub przeglądarkę i pozwala je odzyskać po wyczyszczeniu danych. Zachowaj go np. w Notatkach.</p>' +
+      '<span class="eyebrow label">' + tr('profile') + '</span><div class="stack">' +
+      '<button class="btn-ghost" data-action="go-body">' + icon('user', 16, 2) + tr('goBody') + '</button>' +
+      '<button class="btn-ghost" data-action="go-recovery">' + icon('heart', 16, 2) + tr('goRecovery') + '</button></div>' +
+      '<span class="eyebrow label">' + tr('customGroups') + '</span>' +
+      (state.groups.length ? chipList(state.groups, 'delete-group', 'deleteCategory') : '<p class="note small">' + tr('customGroupsHint') + '</p>') +
+      (state.recoveryTypes.length ? '<span class="eyebrow label">' + tr('customRecTypes') + '</span>' + chipList(state.recoveryTypes, 'delete-rtype', 'deleteRecType') : '') +
+      '<span class="eyebrow label">' + tr('backup') + '</span>' +
+      '<p class="note">' + tr('backupNote', tn(state.exercises.length, 'exercisesN') + ', ' + tn(state.entries.length, 'entries') + ', ' +
+        tn(state.body.length, 'measurementsN') + ', ' + tn(state.recovery.length, 'recEntriesN')) + '</p>' +
       '<div class="stack">' +
-      '<button class="btn-ghost" data-action="copy-code">' + icon('copy', 16, 2) + 'Kopiuj kod kopii</button>' +
-      '<textarea id="code-out" class="code" readonly hidden aria-label="Kod kopii"></textarea>' +
-      '<button class="btn-ghost" data-action="export-file">' + icon('share', 16, 2) + (bridge ? 'Udostępnij kopię' : 'Zapisz kopię jako plik') + '</button>' +
-      '<button class="btn-ghost" data-action="show-restore">' + icon('restore', 16, 2) + 'Przywróć z kopii</button>' +
+      '<button class="btn-ghost" data-action="copy-code">' + icon('copy', 16, 2) + tr('copyCode') + '</button>' +
+      '<textarea id="code-out" class="code" readonly hidden aria-label="' + tr('backupCode') + '"></textarea>' +
+      '<button class="btn-ghost" data-action="export-file">' + icon('share', 16, 2) + tr(bridge ? 'shareBackup' : 'saveBackupFile') + '</button>' +
+      '<button class="btn-ghost" data-action="show-restore">' + icon('restore', 16, 2) + tr('restoreBackup') + '</button>' +
       '</div>' +
       '<div id="restore" class="restore"' + (showRestore ? '' : ' hidden') + '>' +
-      '<textarea id="code-input" class="code" placeholder="Wklej kod kopii (zaczyna się od KNT1:)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>' +
-      '<div class="stack"><button class="btn-primary" data-action="restore-code">' + icon('restore', 16, 2.4) + 'Przywróć z kodu</button>' +
-      '<button class="btn-ghost" data-action="pick-file">' + icon('restore', 16, 2) + 'Wybierz plik kopii</button></div>' +
+      '<textarea id="code-input" class="code" placeholder="' + tr('pasteCode') + '" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>' +
+      '<div class="stack"><button class="btn-primary" data-action="restore-code">' + icon('restore', 16, 2.4) + tr('restoreFromCode') + '</button>' +
+      '<button class="btn-ghost" data-action="pick-file">' + icon('restore', 16, 2) + tr('pickBackupFile') + '</button></div>' +
       '<input id="file-input" class="visually-hidden" type="file" accept=".json,application/json,text/plain" tabindex="-1">' +
       '</div>' +
-      '<span class="eyebrow label">Dane</span><div class="stack">' +
-      '<button class="btn-ghost" data-action="demo">' + icon('spark', 16, 2) + 'Wczytaj dane demo</button>' +
-      '<button class="btn-ghost danger" data-action="reset">' + icon('trash', 16, 2) + 'Usuń wszystkie dane</button>' +
+      '<span class="eyebrow label">' + tr('data') + '</span><div class="stack">' +
+      '<button class="btn-ghost" data-action="csv">' + icon('file', 16, 2) + tr('exportCsv') + proBadge() + '</button>' +
+      '<div id="csv-box" class="csv-box" hidden>' +
+      ['training', 'body', 'recovery'].map(function (k) {
+        return '<button class="gchip" data-action="csv-export" data-kind="' + k + '">' + tr('csv_' + k) + '</button>';
+      }).join('') + '</div>' +
+      '<button class="btn-ghost" data-action="demo">' + icon('spark', 16, 2) + tr('loadDemo') + '</button>' +
+      '<button class="btn-ghost danger" data-action="reset">' + icon('trash', 16, 2) + tr('deleteAll') + '</button>' +
       '</div>' +
-      '<p class="fine">Kinetic · wersja web 1.1</p>');
+      '<p class="fine">Kinetic ' + VERSION + ' · ' + (bridge ? 'Android' : 'Web') + '</p>');
   }
 
-  function celebrate(value, unit, caption) {
+  function celebrate(value, unit, caption, ic, heading) {
     var el = document.createElement('div');
     el.className = 'celebrate';
     var rays = '';
     for (var i = 0; i < 12; i++) rays += '<i class="cel-ray" style="transform:rotate(' + (i * 30) + 'deg)"><b></b></i>';
-    el.innerHTML = '<div class="cel-glow"></div>' + rays + '<div class="cel-body">' + icon('trophy', 56, 1.8) +
-      '<div class="cel-k">Nowy rekord</div><div class="cel-v">' + value + '<small>' + unit + '</small></div><div class="cel-s">' + caption + '</div></div>';
+    el.innerHTML = '<div class="cel-glow"></div>' + rays + '<div class="cel-body">' + icon(ic || 'trophy', 56, 1.8) +
+      '<div class="cel-k">' + (heading || tr('newRecord')) + '</div><div class="cel-v">' + value + (unit ? '<small>' + unit + '</small>' : '') + '</div>' +
+      '<div class="cel-s">' + caption + '</div></div>';
     var close = function () {
       if (!el.parentNode || el.classList.contains('out')) return;
       el.classList.add('out');
@@ -1851,6 +2532,7 @@
   function parseRoute() {
     var hash = location.hash || '';
     if (/^#\/body/.test(hash)) return { key: 'body' };
+    if (/^#\/recovery/.test(hash)) return { key: 'recovery' };
     var match = hash.match(/^#\/e\/([A-Za-z0-9_-]+)/);
     if (match) return { key: 'e:' + match[1], id: match[1] };
     return { key: 'home' };
@@ -1865,11 +2547,15 @@
       ui.fromHome = prev === 'home' && r.key !== 'home';
       ui.historyLimit = 12;
       ui.bodyLimit = 8;
+      ui.recLimit = 12;
       closeSheet(true);
     }
     ui.route = r.key;
     if (r.key === 'body') {
       renderBody(enter);
+      if (enter) window.scrollTo(0, 0);
+    } else if (r.key === 'recovery') {
+      renderRecovery(enter);
       if (enter) window.scrollTo(0, 0);
     } else if (r.id) {
       renderDetail(r.id, enter);
@@ -1883,6 +2569,7 @@
   function refresh() {
     if (ui.route === 'home') renderHome(false);
     else if (ui.route === 'body') renderBody(false);
+    else if (ui.route === 'recovery') renderRecovery(false);
     else if (ui.route) renderDetail(ui.route.slice(2), false);
   }
 
@@ -1895,6 +2582,11 @@
   function goBack() {
     if (ui.fromHome && window.history.length > 1) window.history.back();
     else location.hash = '#/';
+  }
+
+  function goTo(hash) {
+    closeSheet(true);
+    location.hash = hash;
   }
 
   // ---------------------------------------------------------------------------
@@ -1924,16 +2616,28 @@
       case 'measure': openMeasure(); break;
       case 'save-measure': saveMeasure(); break;
       case 'save-group': saveGroup(); break;
+      case 'go-body': goTo('#/body'); break;
+      case 'go-recovery': goTo('#/recovery'); break;
+      case 'add-recovery': openRecoveryLog(); break;
+      case 'pick-rtype': pickRecoveryType(t.getAttribute('data-value')); break;
+      case 'save-rtype': saveRecoveryType(); break;
+      case 'save-recovery': saveRecovery(); break;
+      case 'm-set': setMinutes(Number(t.getAttribute('data-value'))); break;
+      case 'paywall': openPaywall(); break;
+      case 'buy-pro': buyPro(); break;
+      case 'restore-pro': restorePro(); break;
 
-      case 'go-body':
-        closeSheet(true);
-        location.hash = '#/body';
+      case 'm-step': {
+        var mins = parseNum($('#min-input').value);
+        setMinutes((isFinite(mins) ? mins : 0) + Number(t.getAttribute('data-step')));
         break;
+      }
 
-      case 'new-group': {
-        var box = $('#new-group');
+      case 'new-group':
+      case 'new-rtype': {
+        var box = $(action === 'new-group' ? '#new-group' : '#new-rtype');
         box.hidden = !box.hidden;
-        if (!box.hidden) $('#group-name').focus();
+        if (!box.hidden) box.querySelector('input').focus();
         break;
       }
 
@@ -1946,12 +2650,24 @@
       case 'delete-group': {
         var gid = t.getAttribute('data-id');
         var used = state.exercises.filter(function (e) { return e.group === gid; }).length;
-        if (used && !window.confirm('Ćwiczenia z tej kategorii (' + used + ') trafią do „Inne”. Usunąć kategorię?')) break;
+        if (used && !window.confirm(tr('confirmDeleteGroup', used))) break;
         state.groups = state.groups.filter(function (g) { return g.id !== gid; });
         state.exercises.forEach(function (e) { if (e.group === gid) e.group = 'other'; });
         commit();
-        var chip = t.closest('.cg');
-        if (chip) chip.parentNode.removeChild(chip);
+        target = t.closest('.cg');
+        if (target) target.parentNode.removeChild(target);
+        refresh();
+        break;
+      }
+
+      case 'delete-rtype': {
+        var rid = t.getAttribute('data-id');
+        var usedBy = state.recovery.filter(function (r) { return r.type === rid; }).length;
+        if (usedBy && !window.confirm(tr('confirmDeleteRecType', usedBy))) break;
+        state.recoveryTypes = state.recoveryTypes.filter(function (r) { return r.id !== rid; });
+        commit();
+        target = t.closest('.cg');
+        if (target) target.parentNode.removeChild(target);
         refresh();
         break;
       }
@@ -1967,11 +2683,13 @@
         var prevSel = app.querySelector('.c.sel');
         var info = $('#heat-info');
         if (prevSel) prevSel.classList.remove('sel');
-        if (prevSel === t) { info.innerHTML = 'Dotknij dzień'; break; }
+        if (prevSel === t) { info.innerHTML = tr('tapDay'); break; }
         t.classList.add('sel');
-        var sets = Number(t.getAttribute('data-s')), vol = Number(t.getAttribute('data-v'));
-        info.innerHTML = '<b>' + dfDayMonth.format(new Date(Number(t.getAttribute('data-t')))) + '</b> · ' +
-          (sets > 0 ? sets + ' ' + plural(sets, 'seria', 'serie', 'serii') + (vol > 0 ? ' · ' + fmtInt(vol) + ' kg' : '') : 'odpoczynek');
+        var sets = Number(t.getAttribute('data-s')), vol = Number(t.getAttribute('data-v')), rest = Number(t.getAttribute('data-r'));
+        var parts = [];
+        if (sets > 0) parts.push(tn(sets, 'setsN') + (vol > 0 ? ' · ' + fmtInt(vol) + ' kg' : ''));
+        if (rest > 0) parts.push(tr('recoveryLower') + ' ' + fmtDur(rest));
+        info.innerHTML = '<b>' + dfDayMonth.format(new Date(Number(t.getAttribute('data-t')))) + '</b> · ' + (parts.length ? parts.join(' · ') : tr('restDay'));
         break;
       }
 
@@ -1984,7 +2702,7 @@
         if (group === 'bodyRange' && bodyCtx) {
           bodyCtx.pts = bodyPoints();
           renderBodyHead(null);
-          mountChart($('#b-chart'), bodyCtx.pts, true, bodyChartOpts);
+          mountChart($('#b-chart'), bodyCtx.pts, true, bodyChartOpts());
         } else if (detailCtx) {
           detailCtx.pts = currentPoints(detailCtx.ex);
           renderHead(null);
@@ -2001,6 +2719,11 @@
       case 'more-body':
         ui.bodyLimit += 20;
         renderBodyLog();
+        break;
+
+      case 'more-rec':
+        ui.recLimit += 20;
+        renderRecLog();
         break;
 
       case 'w-step': {
@@ -2035,7 +2758,7 @@
 
       case 'delete-exercise': {
         var ex = findExercise(t.getAttribute('data-id'));
-        if (!ex || !window.confirm('Usunąć „' + ex.name + '” i całą jego historię?')) break;
+        if (!ex || !window.confirm(tr('confirmDeleteExercise', ex.name))) break;
         state.exercises = state.exercises.filter(function (e) { return e.id !== ex.id; });
         state.entries = state.entries.filter(function (e) { return e.exerciseId !== ex.id; });
         commit();
@@ -2044,22 +2767,32 @@
       }
 
       case 'delete-entry': {
-        if (!window.confirm('Usunąć ten wpis?')) break;
+        if (!window.confirm(tr('confirmDeleteEntry'))) break;
         var entryId = t.getAttribute('data-id');
         state.entries = state.entries.filter(function (e) { return e.id !== entryId; });
         commit();
         refresh();
-        toast('Usunięto wpis');
+        toast(tr('entryDeleted'));
         break;
       }
 
       case 'delete-body': {
-        if (!window.confirm('Usunąć ten pomiar?')) break;
+        if (!window.confirm(tr('confirmDeleteMeasurement'))) break;
         var bodyId = t.getAttribute('data-id');
         state.body = state.body.filter(function (b) { return b.id !== bodyId; });
         commit();
         refresh();
-        toast('Usunięto pomiar');
+        toast(tr('measurementDeleted'));
+        break;
+      }
+
+      case 'delete-recovery': {
+        if (!window.confirm(tr('confirmDeleteEntry'))) break;
+        var recId = t.getAttribute('data-id');
+        state.recovery = state.recovery.filter(function (r) { return r.id !== recId; });
+        commit();
+        refresh();
+        toast(tr('entryDeleted'));
         break;
       }
 
@@ -2071,16 +2804,44 @@
         break;
       }
 
+      case 'set-lang': {
+        prefs.lang = t.getAttribute('data-value');
+        savePrefs();
+        applyLang();
+        refresh();
+        openSettings(false);
+        break;
+      }
+
+      case 'set-theme': {
+        var theme = t.getAttribute('data-value');
+        if (!hasPro() && theme !== 'green') { openPaywall(); break; }
+        prefs.theme = theme;
+        savePrefs();
+        applyTheme();
+        setChoice('.swatch', theme);
+        break;
+      }
+
+      case 'csv': {
+        if (!hasPro()) { openPaywall(); break; }
+        var csvBox = $('#csv-box');
+        csvBox.hidden = !csvBox.hidden;
+        break;
+      }
+
+      case 'csv-export': exportCsv(t.getAttribute('data-kind')); break;
+
       case 'copy-code': {
         var code = encodeBackup();
         var out = $('#code-out');
         out.value = code;
         out.hidden = false;
         copyText(code).then(function (ok) {
-          if (ok) { toast('Skopiowano kod kopii'); return; }
+          if (ok) { toast(tr('codeCopied')); return; }
           out.focus();
           out.select();
-          toast('Zaznacz kod i skopiuj go ręcznie');
+          toast(tr('copyManually'));
         });
         break;
       }
@@ -2097,7 +2858,7 @@
       case 'pick-file': $('#file-input').click(); break;
 
       case 'demo':
-        if ((state.exercises.length || state.body.length) && !window.confirm('Zastąpić obecne dane przykładowymi?')) break;
+        if ((state.exercises.length || state.body.length || state.recovery.length) && !window.confirm(tr('confirmDemo'))) break;
         state = normalize(makeDemo());
         commit();
         closeSheet();
@@ -2105,7 +2866,7 @@
         break;
 
       case 'reset':
-        if (!window.confirm('Usunąć wszystkie ćwiczenia, historię i pomiary? Tej operacji nie można cofnąć.')) break;
+        if (!window.confirm(tr('confirmReset'))) break;
         state = emptyState(state.goal);
         commit();
         closeSheet();
@@ -2123,13 +2884,18 @@
     if (ev.target.id !== 'file-input' || !ev.target.files || !ev.target.files[0]) return;
     var reader = new FileReader();
     reader.onload = function () { restoreFrom(reader.result); };
-    reader.onerror = function () { toast('Nie udało się odczytać pliku'); };
+    reader.onerror = function () { toast(tr('fileReadFailed')); };
     reader.readAsText(ev.target.files[0]);
   });
 
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Enter' && ev.target.id === 'ex-name') { ev.preventDefault(); addSave(); }
-    if (ev.key === 'Enter' && ev.target.id === 'group-name') { ev.preventDefault(); saveGroup(); }
+    if (ev.key === 'Enter') {
+      var id = ev.target.id;
+      if (id === 'ex-name') { ev.preventDefault(); addSave(); }
+      else if (id === 'group-name') { ev.preventDefault(); saveGroup(); }
+      else if (id === 'rtype-name') { ev.preventDefault(); saveRecoveryType(); }
+      else if (id === 'min-input') { ev.preventDefault(); saveRecovery(); }
+    }
     if (ev.key === 'Escape') closeSheet();
   });
 
@@ -2137,9 +2903,10 @@
   window.addEventListener('resize', function () {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () {
-      var el = $('#d-chart'), bel = $('#b-chart');
+      var el = $('#d-chart'), bel = $('#b-chart'), rel = $('#r-chart');
       if (detailCtx && el && el.clientWidth !== chartWidth) mountChart(el, detailCtx.pts, false, chartOptsFor(detailCtx.ex));
-      if (bodyCtx && bel && bel.clientWidth !== chartWidth) mountChart(bel, bodyCtx.pts, false, bodyChartOpts);
+      if (bodyCtx && bel && bel.clientWidth !== chartWidth) mountChart(bel, bodyCtx.pts, false, bodyChartOpts());
+      if (recCtx && rel && rel.clientWidth !== chartWidth) mountChart(rel, recCtx.pts, false, recChartOpts());
       placeThumbs();
     }, 150);
   });
@@ -2161,7 +2928,11 @@
   // Start
   // ---------------------------------------------------------------------------
 
+  loadPrefs();
+  applyLang();
   load();
+  initPro();
+  applyTheme();
   if (navigator.storage && navigator.storage.persist) {
     try { navigator.storage.persist(); } catch (err) { /* not supported */ }
   }

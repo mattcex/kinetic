@@ -1,8 +1,8 @@
 {
   "name": "Kinetic",
   "short_name": "Kinetic",
-  "description": "Strength-training log with progress charts, personal-record detection and an activity calendar.",
-  "lang": "pl",
+  "description": "Strength-training log with progress charts, personal records, body metrics and recovery tracking.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
